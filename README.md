@@ -1,4 +1,4 @@
-# Obsidian Sample Plugin
+# Tree Style Notes for Obsidian
 
 This is a sample plugin for Obsidian (https://obsidian.md).
 
