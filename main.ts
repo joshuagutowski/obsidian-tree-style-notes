@@ -1,10 +1,6 @@
 import {
 	App,
-	Editor,
 	ItemView,
-	MarkdownView,
-	Modal,
-	Notice,
 	Plugin,
 	PluginSettingTab,
 	Setting,
@@ -40,14 +36,48 @@ class TreeNotesView extends ItemView {
 		return "Tree Notes View";
 	}
 
+	getIcon(): string {
+		return "list-tree"
+	}
+
 	async onOpen() {
 		const container = this.containerEl.children[1];
 		container.empty();
-		container.createEl("h4", { text: "Tree Style Notes" });
+		await this.renderView(container);
+	}
+
+	async renderView(container: Element) {
+		// get vault files and metadata
+		const files = this.app.vault.getFiles();
+		const metadataCache = this.app.metadataCache;
+
+		// create sections
+		const existingFiles = container.createEl('div', { cls: 'nav-folder' });
+		const potentialFiles = container.createEl('div', { cls: 'nav-folder' });
+		// add headings
+		existingFiles.createEl('div', { text: 'Existing Files', cls: 'nav-folder-title' });
+		potentialFiles.createEl('div', { text: 'Potential Links', cls: 'nav-folder-title' });
+
+		// Track potential links
+		const potentialLinks = new Set<string>();
+
+		for (const file of files) {
+			// Add existing file to the view
+			const fileItem = existingFiles.createDiv({ cls: 'nav-file' });
+			const fileLink = fileItem.createDiv({ cls: 'nav-file-title' });
+			fileLink.setText(file.basename);
+
+			// Add click handler to open file
+			fileLink.onClickEvent(() => {
+				this.app.workspace.getLeaf(false).openFile(file);
+			});
+		}
+
 	}
 
 	async onClose() { }
 }
+
 
 // main plugin
 export default class TreeStyleNotesPlugin extends Plugin {
@@ -61,21 +91,20 @@ export default class TreeStyleNotesPlugin extends Plugin {
 			(leaf) => new TreeNotesView(leaf)
 		);
 
+
+		// open view ribbon
 		this.addRibbonIcon('list-tree', 'Tree Style Notes View', () => {
 			this.activateView();
 		});
 
-
-
-		// simple command
+		// open view command
 		this.addCommand({
-			id: "open-sample-modal-simple",
-			name: "Open sample modal (simple)",
+			id: "open-tree-style-notes-view",
+			name: "Open Tree Style Notes View",
 			callback: () => {
-				new SampleModal(this.app).open();
+				this.activateView();
 			},
 		});
-
 
 
 		// settings tab
@@ -93,7 +122,9 @@ export default class TreeStyleNotesPlugin extends Plugin {
 		);
 	}
 
-	onunload() { }
+	async onunload() {
+		this.app.workspace.detachLeavesOfType(VIEW_TYPE_TREENOTES)
+	}
 
 	async activateView() {
 		const { workspace } = this.app;
@@ -105,6 +136,9 @@ export default class TreeStyleNotesPlugin extends Plugin {
 			leaf = leaves[0];
 		} else {
 			leaf = workspace.getRightLeaf(false);
+			if (!leaf) {
+				return
+			}
 			await leaf.setViewState({ type: VIEW_TYPE_TREENOTES, active: true });
 		}
 
@@ -121,22 +155,6 @@ export default class TreeStyleNotesPlugin extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
-	}
-}
-
-class SampleModal extends Modal {
-	constructor(app: App) {
-		super(app);
-	}
-
-	onOpen() {
-		const { contentEl } = this;
-		contentEl.setText("Woah!");
-	}
-
-	onClose() {
-		const { contentEl } = this;
-		contentEl.empty();
 	}
 }
 
