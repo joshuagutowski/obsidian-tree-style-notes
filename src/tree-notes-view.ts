@@ -4,7 +4,7 @@ import {
 	setIcon,
 } from "obsidian";
 
-import { createCache } from "./file-cache";
+import { createCache, SortOrder } from "./file-cache";
 
 export const VIEW_TYPE_TREENOTES = "tree-notes-view";
 
@@ -32,19 +32,24 @@ export class TreeNotesView extends ItemView {
 	}
 
 	async renderView(container: Element) {
+		// settings
+		const order = SortOrder.NUM_DESC
+		const cutoff = 5
+
+
 		// get vault files and metadata
 		const files = this.app.vault.getFiles();
 		const metadataCache = this.app.metadataCache;
 
 		// create cache
-		const cache = createCache(files, metadataCache)
+		const cache = createCache(files, metadataCache);
 
 		// sort cache
-		cache.links = new Map([...cache.links.entries()].sort((a, b) => b[1] - a[1]));
+		cache.sort(order);
 
 
 		container.removeClass('view-content');
-		container.addClass('workspace-leaf-content')
+		container.addClass('workspace-leaf-content');
 
 		// add nav buttons
 		const navHeader = container.createDiv({
@@ -67,6 +72,14 @@ export class TreeNotesView extends ItemView {
 			}
 		});
 		setIcon(sortButton, 'sort-asc')
+		const collapseButton = navButtons.createDiv({
+			cls: 'clickable-icon nav-action-button',
+			attr: {
+				'aria-label': 'Collapse all'
+			}
+		});
+		setIcon(collapseButton, 'chevrons-down-up')
+
 
 		// create view
 		const linkFiles = container.createDiv({
@@ -79,7 +92,7 @@ export class TreeNotesView extends ItemView {
 
 		// add files to view
 		for (const link of cache.links) {
-			if (link[1] < 5) {
+			if (link[1] < cutoff) {
 				continue
 			}
 			// main file container
