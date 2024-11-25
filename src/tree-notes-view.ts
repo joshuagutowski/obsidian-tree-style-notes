@@ -1,29 +1,10 @@
 import {
 	ItemView,
-	TFile,
 	WorkspaceLeaf,
+	setIcon,
 } from "obsidian";
 
-type FileObj = {
-	name: string;
-	existingLinks: Set<string>;
-	potentialLinks: Set<string>;
-	linkCount: number;
-}
-
-interface existingFileObj extends FileObj {
-	path: string;
-}
-
-interface potentialFileObj extends FileObj {
-	path: string;
-}
-
-type FilesCache = {
-	links: Map<string, number>;
-	//existingLinks: Map<string, existingFileObj>;
-	//potentialLinks: Map<string, potentialFileObj>;
-}
+import { createCache } from "./file-cache";
 
 export const VIEW_TYPE_TREENOTES = "tree-notes-view";
 
@@ -56,54 +37,52 @@ export class TreeNotesView extends ItemView {
 		const metadataCache = this.app.metadataCache;
 
 		// create cache
-		let links = new Map<string, number>()
+		const cache = createCache(files, metadataCache)
 
-		for (const file of files) {
-			if (!links.has(file.basename)) {
-				links.set(file.basename, 0)
+		// sort cache
+		cache.links = new Map([...cache.links.entries()].sort((a, b) => b[1] - a[1]));
+
+
+		container.removeClass('view-content');
+		container.addClass('workspace-leaf-content')
+
+		// add nav buttons
+		const navHeader = container.createDiv({
+			cls: 'nav-header'
+		});
+		const navButtons = navHeader.createDiv({
+			cls: 'nav-buttons-container'
+		});
+		const newNoteButton = navButtons.createDiv({
+			cls: 'clickable-icon nav-action-button',
+			attr: {
+				'aria-label': 'New note'
 			}
-
-			const fileCache = metadataCache.getFileCache(file);
-
-			// go through links in body
-			if (fileCache && fileCache.links) {
-				for (const link of fileCache.links) {
-					if (!links.has(link.link)) {
-						links.set(link.link, 0)
-					}
-					links.set(link.link, links.get(link.link) + 1)
-				}
+		});
+		setIcon(newNoteButton, 'edit')
+		const sortButton = navButtons.createDiv({
+			cls: 'clickable-icon nav-action-button',
+			attr: {
+				'aria-label': 'Change sort order'
 			}
+		});
+		setIcon(sortButton, 'sort-asc')
 
-			// go through links in metadata
-			if (fileCache && fileCache.frontmatterLinks) {
-				for (const link of fileCache.frontmatterLinks) {
-					if (!links.has(link.link)) {
-						links.set(link.link, 0)
-					}
-					links.set(link.link, links.get(link.link) + 1)
-				}
-			}
-		}
-
-		const sortedLinks = new Map([...links.entries()].sort((a, b) => b[1] - a[1]));
-
+		// create view
 		const linkFiles = container.createDiv({
-			cls: 'nav-files-container',
+			cls: 'nav-files-container node-insert-event',
 			attr: {
 				style: 'position: relative;'
 			}
 		});
-		const navButtons = linkFiles.createDiv({
-			cls: 'nav-buttons-container'
-		});
+
 
 		// add files to view
-		for (const link of sortedLinks) {
+		for (const link of cache.links) {
 			if (link[1] < 5) {
 				continue
 			}
-			// main container
+			// main file container
 			const treeItem = linkFiles.createDiv({ cls: 'tree-item nav-folder is-collapsed' });
 
 			// title container
@@ -115,51 +94,35 @@ export class TreeNotesView extends ItemView {
 			const collapseIcon = treeItemSelf.createDiv({
 				cls: 'tree-item-icon collapse-icon is-collapsed'
 			});
+			setIcon(collapseIcon, 'right-triangle');
 
-			collapseIcon.innerHTML = `
-			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon right-triangle">
-				<path d="M3 8L12 17L21 8"></path>
-			</svg>
-			`;
 
-			// content
+			// file name
 			const fileName = treeItemSelf.createDiv({
 				cls: 'tree-item-inner nav-folder-title-content'
 			});
 			fileName.setText(link[0]);
 
+			// file count
 			const linkCount = treeItemSelf.createDiv({
 				cls: 'tree-item-flair-outer tree-item-flair'
 			});
-			linkCount.setText("" + link[1]);
+			linkCount.setText(String(link[1]));
 
+			let collapsed = true
 
 			treeItemSelf.addEventListener('click', (event) => {
-				treeItem.toggleClass('is-collapsed', false);
-				collapseIcon.toggleClass('is-collapsed', false);
+				if (collapsed) {
+					treeItem.toggleClass('is-collapsed', false);
+					collapseIcon.toggleClass('is-collapsed', false);
+					collapsed = false
+				} else {
+					treeItem.toggleClass('is-collapsed', true);
+					collapseIcon.toggleClass('is-collapsed', true);
+					collapsed = true
+				}
 			});
 		}
-
-
-
-		//// create section
-		//const existingFiles = container.createEl('div', { cls: 'nav-folder' });
-		//// add headings
-		//existingFiles.createEl('div', { text: 'Existing Files', cls: 'nav-folder-title' });
-
-		//// add files to view
-		//for (const file of files) {
-		//	// Add existing file to the view
-		//	const fileItem = existingFiles.createDiv({ cls: 'nav-file' });
-		//	const fileLink = fileItem.createDiv({ cls: 'nav-file-title' });
-		//	fileLink.setText(file.basename);
-
-		//	// Add click handler to open file
-		//	fileLink.onClickEvent(() => {
-		//		this.app.workspace.getLeaf(false).openFile(file);
-		//	});
-		//}
-
 	}
 
 	async onClose() { }
