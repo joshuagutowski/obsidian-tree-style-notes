@@ -19,10 +19,55 @@ export enum SortOrder {
 }
 
 export class FilesCache {
-	links: Map<string, FileObj>;
-	constructor(links: Map<string, FileObj>) {
-		this.links = links;
+	links: Map<string, FileObj> = new Map<string, FileObj>;
 
+	createCache(files: TFile[], metadataCache: MetadataCache) {
+		for (const file of files) {
+			this.createCacheEntry(file.basename);
+			const currentFile = this.links.get(file.basename);
+			if (currentFile) {
+				currentFile.link = file;
+			}
+
+			const fileCache = metadataCache.getFileCache(file);
+			let fileCacheLinks: (LinkCache | FrontmatterLinkCache)[] = [];
+			if (fileCache) {
+				if (fileCache.links) {
+					fileCacheLinks = [...fileCacheLinks, ...fileCache.links]
+				}
+				if (fileCache.frontmatterLinks) {
+					fileCacheLinks = [...fileCacheLinks, ...fileCache.frontmatterLinks]
+				}
+			}
+
+			for (const link of fileCacheLinks) {
+				this.createCacheEntry(link.link);
+				const cacheLink = this.links.get(link.link);
+				if (currentFile && cacheLink) {
+					if (!currentFile.linkSet.has(link.link)) {
+						currentFile.linkSet.set(link.link, cacheLink);
+					}
+					if (!cacheLink.linkSet.has(file.basename)) {
+						cacheLink.linkSet.set(file.basename, currentFile)
+					}
+				}
+			}
+		}
+
+		for (const [, file] of this.links) {
+			file.count = file.linkSet.size;
+		}
+
+	}
+
+	createCacheEntry(name: string) {
+		if (!this.links.has(name)) {
+			this.links.set(name, {
+				count: 0,
+				link: undefined,
+				linkSet: new Map<string, FileObj>
+			});
+		}
 	}
 
 	sort(order: SortOrder) {
@@ -30,7 +75,9 @@ export class FilesCache {
 
 		switch (order as SortOrder) {
 			case SortOrder.NUM_ASC: {
-				sortFunc = (a: [string, FileObj], b: [string, FileObj]) => a[1].count - b[1].count
+				sortFunc = (a: [string, FileObj], b: [string, FileObj]) => (
+					a[1].count - b[1].count
+				)
 				break
 			}
 			case SortOrder.NUM_DESC: {
@@ -52,56 +99,4 @@ export class FilesCache {
 
 		this.links = new Map([...this.links.entries()].sort(sortFunc));
 	}
-}
-
-export function createCache(files: TFile[], metadataCache: MetadataCache): FilesCache {
-	let cacheLinks = new Map<string, FileObj>;
-
-	for (const file of files) {
-		if (!cacheLinks.has(file.basename)) {
-			cacheLinks.set(file.basename, {
-				count: 0,
-				link: undefined,
-				linkSet: new Map<string, FileObj>
-			})
-		}
-
-		const currentFile = cacheLinks.get(file.basename);
-		if (currentFile) {
-			currentFile.link = file;
-		}
-
-		const fileCache = metadataCache.getFileCache(file);
-		let fileCacheLinks: (LinkCache | FrontmatterLinkCache)[] = [];
-		if (fileCache) {
-			if (fileCache.links) {
-				fileCacheLinks = [...fileCacheLinks, ...fileCache.links]
-			}
-			if (fileCache.frontmatterLinks) {
-				fileCacheLinks = [...fileCacheLinks, ...fileCache.frontmatterLinks]
-			}
-		}
-
-		for (const link of fileCacheLinks) {
-			if (!cacheLinks.has(link.link)) {
-				cacheLinks.set(link.link, {
-					count: 0,
-					link: undefined,
-					linkSet: new Map<string, FileObj>
-				})
-			}
-			const cacheLink = cacheLinks.get(link.link);
-			if (currentFile && cacheLink) {
-				if (!currentFile.linkSet.has(link.link)) {
-					currentFile.linkSet.set(link.link, cacheLink);
-				}
-				if (!cacheLink.linkSet.has(file.basename)) {
-					cacheLink.linkSet.set(file.basename, currentFile)
-				}
-				cacheLink.count++;
-			}
-		}
-
-	}
-	return new FilesCache(cacheLinks)
 }

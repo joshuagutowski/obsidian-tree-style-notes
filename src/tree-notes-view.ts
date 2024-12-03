@@ -5,7 +5,6 @@ import {
 } from "obsidian";
 
 import {
-	createCache,
 	FilesCache,
 	FileObj,
 	SortOrder
@@ -14,7 +13,7 @@ import {
 export const VIEW_TYPE_TREENOTES = "tree-notes-view";
 
 export class TreeNotesView extends ItemView {
-	cache: FilesCache;
+	cache: FilesCache = new FilesCache;
 	cutoff: number;
 	order: SortOrder;
 
@@ -43,8 +42,7 @@ export class TreeNotesView extends ItemView {
 		const container = this.containerEl.children[1];
 		container.empty();
 
-		// create cache
-		this.cache = createCache(
+		this.cache.createCache(
 			this.app.vault.getFiles(),
 			this.app.metadataCache
 		);
@@ -54,37 +52,10 @@ export class TreeNotesView extends ItemView {
 	}
 
 	async renderView(container: Element) {
-		// add nav buttons
-		const navHeader = container.createDiv({
-			cls: 'nav-header'
-		});
-		const navButtons = navHeader.createDiv({
-			cls: 'nav-buttons-container'
-		});
-		const newNoteButton = navButtons.createDiv({
-			cls: 'clickable-icon nav-action-button',
-			attr: {
-				'aria-label': 'New note'
-			}
-		});
-		setIcon(newNoteButton, 'edit')
-		const sortButton = navButtons.createDiv({
-			cls: 'clickable-icon nav-action-button',
-			attr: {
-				'aria-label': 'Change sort order'
-			}
-		});
-		setIcon(sortButton, 'sort-asc')
-		const collapseButton = navButtons.createDiv({
-			cls: 'clickable-icon nav-action-button',
-			attr: {
-				'aria-label': 'Collapse all'
-			}
-		});
-		setIcon(collapseButton, 'chevrons-down-up')
+		// create header
+		this.renderHeader(container);
 
-
-		// create view
+		// create container
 		const navFilesContainer = container.createDiv({
 			cls: 'nav-files-container node-insert-event',
 		});
@@ -164,6 +135,50 @@ export class TreeNotesView extends ItemView {
 
 		return treeItemSelf;
 	}
+
+	async renderHeader(container: Element) {
+		const navHeader = container.createDiv({
+			cls: 'nav-header'
+		});
+		const navButtons = navHeader.createDiv({
+			cls: 'nav-buttons-container'
+		});
+
+		// new note
+		const newNoteButton = navButtons.createDiv({
+			cls: 'clickable-icon nav-action-button',
+			attr: {
+				'aria-label': 'New note'
+			}
+		});
+		setIcon(newNoteButton, 'edit')
+		//newNoteButton.addEventListener('click', async (event) => {
+		//	const newFile = await this.app.vault.create(
+		//		`Untitled.md`,
+		//		''
+		//	);
+		//	this.app.workspace.getLeaf(false).openFile(newFile);
+		//});
+
+		// sort
+		const sortButton = navButtons.createDiv({
+			cls: 'clickable-icon nav-action-button',
+			attr: {
+				'aria-label': 'Change sort order'
+			}
+		});
+		setIcon(sortButton, 'sort-asc')
+
+		// collapse
+		const collapseButton = navButtons.createDiv({
+			cls: 'clickable-icon nav-action-button',
+			attr: {
+				'aria-label': 'Collapse all'
+			}
+		});
+		setIcon(collapseButton, 'chevrons-down-up')
+	}
+
 
 	async onClose() { }
 }
