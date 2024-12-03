@@ -14,13 +14,11 @@ export const VIEW_TYPE_TREENOTES = "tree-notes-view";
 
 export class TreeNotesView extends ItemView {
 	cache: FilesCache = new FilesCache;
-	cutoff: number;
-	order: SortOrder;
+	cutoff: number = 5;
+	order: SortOrder = SortOrder.NUM_DESC;
 
 	constructor(leaf: WorkspaceLeaf) {
 		super(leaf);
-		this.order = SortOrder.NUM_DESC;
-		this.cutoff = 5;
 		const container = this.containerEl.children[1];
 		container.removeClass('view-content');
 		container.addClass('workspace-leaf');
@@ -152,13 +150,9 @@ export class TreeNotesView extends ItemView {
 			}
 		});
 		setIcon(newNoteButton, 'edit')
-		//newNoteButton.addEventListener('click', async (event) => {
-		//	const newFile = await this.app.vault.create(
-		//		`Untitled.md`,
-		//		''
-		//	);
-		//	this.app.workspace.getLeaf(false).openFile(newFile);
-		//});
+		newNoteButton.addEventListener('click', async () => {
+			this.createNewNote();
+		});
 
 		// sort
 		const sortButton = navButtons.createDiv({
@@ -179,6 +173,28 @@ export class TreeNotesView extends ItemView {
 		setIcon(collapseButton, 'chevrons-down-up')
 	}
 
+	async createNewNote() {
+		const basename = 'Untitled';
+		const existingNames = new Set<string>();
+		this.app.vault.getFiles().forEach(file => {
+			if (file.basename.startsWith(basename)) {
+				existingNames.add(file.basename);
+			}
+		});
+
+		let newNoteName = basename;
+		let counter = 1;
+		while (existingNames.has(newNoteName)) {
+			newNoteName = `${basename} ${counter}`;
+			counter++;
+		}
+
+		const newNote = await this.app.vault.create(
+			`${newNoteName}.md`,
+			''
+		);
+		this.app.workspace.getLeaf(false).openFile(newNote);
+	}
 
 	async onClose() { }
 }
