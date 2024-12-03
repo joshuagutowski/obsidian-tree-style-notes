@@ -1,21 +1,14 @@
 import {
 	TFile,
 	MetadataCache,
+	LinkCache,
+	FrontmatterLinkCache,
 } from "obsidian";
 
 type FileObj = {
-	name: string;
-	existingLinks: Set<string>;
-	potentialLinks: Set<string>;
-	linkCount: number;
-}
-
-interface existingFileObj extends FileObj {
-	path: string;
-}
-
-interface potentialFileObj extends FileObj {
-	path: string;
+	count: number;
+	link: TFile | undefined;
+	linkSet: Map<string, FileObj>;
 }
 
 export enum SortOrder {
@@ -25,33 +18,31 @@ export enum SortOrder {
 	ALPH_DESC,
 }
 
-class FilesCache {
-	links: Map<string, number>;
-	constructor(links: Map<string, number>) {
+export class FilesCache {
+	links: Map<string, FileObj>;
+	constructor(links: Map<string, FileObj>) {
 		this.links = links;
 
 	}
-	//existingLinks: Map<string, existingFileObj>;
-	//potentialLinks: Map<string, potentialFileObj>;
 
 	sort(order: SortOrder) {
-		let sortFunc = (a: [string, number], b: [string, number]) => b[1] - a[1]
+		let sortFunc = (a: [string, FileObj], b: [string, FileObj]) => b[1].count - a[1].count
 
 		switch (order as SortOrder) {
 			case SortOrder.NUM_ASC: {
-				sortFunc = (a: [string, number], b: [string, number]) => a[1] - b[1]
+				sortFunc = (a: [string, FileObj], b: [string, FileObj]) => a[1].count - b[1].count
 				break
 			}
 			case SortOrder.NUM_DESC: {
-				sortFunc = (a: [string, number], b: [string, number]) => b[1] - a[1]
+				sortFunc = (a: [string, FileObj], b: [string, FileObj]) => b[1].count - a[1].count
 				break
 			}
 			case SortOrder.ALPH_ASC: {
-				sortFunc = (a: [string, number], b: [string, number]) => a[0].localeCompare(b[0])
+				sortFunc = (a: [string, FileObj], b: [string, FileObj]) => a[0].localeCompare(b[0])
 				break
 			}
 			case SortOrder.ALPH_DESC: {
-				sortFunc = (a: [string, number], b: [string, number]) => b[0].localeCompare(a[0])
+				sortFunc = (a: [string, FileObj], b: [string, FileObj]) => b[0].localeCompare(a[0])
 				break
 			}
 			default: {
@@ -64,26 +55,53 @@ class FilesCache {
 }
 
 export function createCache(files: TFile[], metadataCache: MetadataCache): FilesCache {
-	let cacheLinks = new Map<string, number>()
+	let cacheLinks = new Map<string, FileObj>;
 
 	for (const file of files) {
 		if (!cacheLinks.has(file.basename)) {
-			cacheLinks.set(file.basename, 0)
+			cacheLinks.set(file.basename, {
+				count: 0,
+				link: undefined,
+				linkSet: new Map<string, FileObj>
+			})
+		}
+
+		const currentFile = cacheLinks.get(file.basename);
+		if (currentFile) {
+			currentFile.link = file;
 		}
 
 		const fileCache = metadataCache.getFileCache(file);
-
-		if (fileCache && fileCache.links) {
-			for (const link of fileCache.links) {
-				cacheLinks.set(link.link, (cacheLinks.get(link.link) ?? 0) + 1)
+		let fileCacheLinks: (LinkCache | FrontmatterLinkCache)[] = [];
+		if (fileCache) {
+			if (fileCache.links) {
+				fileCacheLinks = [...fileCacheLinks, ...fileCache.links]
+			}
+			if (fileCache.frontmatterLinks) {
+				fileCacheLinks = [...fileCacheLinks, ...fileCache.frontmatterLinks]
 			}
 		}
 
-		if (fileCache && fileCache.frontmatterLinks) {
-			for (const link of fileCache.frontmatterLinks) {
-				cacheLinks.set(link.link, (cacheLinks.get(link.link) ?? 0) + 1)
+		for (const link of fileCacheLinks) {
+			if (!cacheLinks.has(link.link)) {
+				cacheLinks.set(link.link, {
+					count: 0,
+					link: undefined,
+					linkSet: new Map<string, FileObj>
+				})
+			}
+			const cacheLink = cacheLinks.get(link.link);
+			if (currentFile && cacheLink) {
+				if (!currentFile.linkSet.has(link.link)) {
+					currentFile.linkSet.set(link.link, cacheLink);
+				}
+				if (!cacheLink.linkSet.has(file.basename)) {
+					cacheLink.linkSet.set(file.basename, currentFile)
+				}
+				cacheLink.count++;
 			}
 		}
+
 	}
 	return new FilesCache(cacheLinks)
 }
