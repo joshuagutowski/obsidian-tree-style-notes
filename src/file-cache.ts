@@ -5,7 +5,7 @@ import {
 	FrontmatterLinkCache,
 } from "obsidian";
 
-type FileObj = {
+export type FileObj = {
 	count: number;
 	link: TFile | undefined;
 	linkSet: Map<string, FileObj>;

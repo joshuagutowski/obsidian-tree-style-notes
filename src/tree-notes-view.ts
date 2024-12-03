@@ -1,12 +1,13 @@
 import {
 	ItemView,
 	WorkspaceLeaf,
-	setIcon,
+	setIcon
 } from "obsidian";
 
 import {
 	createCache,
 	FilesCache,
+	FileObj,
 	SortOrder
 } from "./file-cache";
 
@@ -20,6 +21,10 @@ export class TreeNotesView extends ItemView {
 	constructor(leaf: WorkspaceLeaf) {
 		super(leaf);
 		this.order = SortOrder.NUM_DESC;
+		this.cutoff = 5;
+		const container = this.containerEl.children[1];
+		container.removeClass('view-content');
+		container.addClass('workspace-leaf');
 	}
 
 	getViewType(): string {
@@ -45,14 +50,10 @@ export class TreeNotesView extends ItemView {
 		);
 		this.cache.sort(this.order);
 
-		await this.renderView(container, 5);
+		await this.renderView(container);
 	}
 
-	async renderView(container: Element, cutoff: number) {
-		// render view
-		container.removeClass('view-content');
-		container.addClass('workspace-leaf-content');
-
+	async renderView(container: Element) {
 		// add nav buttons
 		const navHeader = container.createDiv({
 			cls: 'nav-header'
@@ -86,80 +87,82 @@ export class TreeNotesView extends ItemView {
 		// create view
 		const navFilesContainer = container.createDiv({
 			cls: 'nav-files-container node-insert-event',
-			attr: {
-				style: 'position: relative;'
-			}
 		});
 
-
-		this.renderItems(navFilesContainer, "", true);
+		this.renderItems(navFilesContainer, undefined);
 	}
 
-	async renderItems(container: HTMLDivElement, parentName: string, topLevel: boolean) {
-		let links = this.cache.links;
-		if (!topLevel) {
-			const parent = this.cache.links.get(parentName);
-			if (parent) {
-				links = parent.linkSet;
-			} else {
-				return;
-			}
-			container = container.createDiv({ cls: 'tree-item-children nav-folder-children' });
-		}
+	async renderItems(container: HTMLDivElement, parentName: string | undefined) {
+		const links = !parentName
+			? this.cache.links
+			: this.cache.links.get(parentName)!.linkSet;
 
 		for (const [name, file] of links) {
-			if (topLevel && file.count < this.cutoff) {
-				continue
-			}
+			if (!parentName && file.count < this.cutoff) continue;
 
-			const treeItem = container.createDiv({ cls: 'tree-item nav-folder is-collapsed' });
-
-			// title container
-			const treeItemSelf = treeItem.createDiv({
-				cls: 'tree-item-self nav-folder-title is-clickable mod-collapsible'
+			const treeItem = container.createDiv({
+				cls: 'tree-item nav-folder is-collapsed'
 			});
 
-			const collapseIcon = treeItemSelf.createDiv({
-				cls: 'tree-item-icon collapse-icon is-collapsed'
-			});
-			setIcon(collapseIcon, 'right-triangle');
+			const treeItemSelf = this.createTreeItem(treeItem, name, file.count);
 
-			const fileName = treeItemSelf.createDiv({
-				cls: 'tree-item-inner nav-folder-title-content'
-			});
-			fileName.setText(name);
+			let isCollapsed = true;
+			let childContainer: HTMLDivElement | null = null;
 
-			const linkCount = treeItemSelf.createDiv({
-				cls: 'tree-item-flair-outer tree-item-flair'
-			});
-			linkCount.setText(String(file.count));
-
-			let collapsed = true;
+			const collapseIcon = treeItemSelf.querySelector('.collapse-icon');
 
 			treeItemSelf.addEventListener('click', async (event) => {
 				if (event.ctrlKey || event.metaKey) {
-					if (file.link === undefined) {
-						const newFile = await this.app.vault.create(
-							`${name}.md`,
-							''
-						);
-						file.link = newFile;
-					}
-					this.app.workspace.getLeaf(false).openFile(file.link);
+					this.handleFileOpen(name, file);
 				} else {
-					if (collapsed) {
-						container.toggleClass('is-collapsed', false);
-						collapseIcon.toggleClass('is-collapsed', false);
-						collapsed = false;
-						this.renderItems(treeItem, name, false);
-					} else {
-						container.toggleClass('is-collapsed', true);
-						collapseIcon.toggleClass('is-collapsed', true);
-						collapsed = true;
+					isCollapsed = !isCollapsed;
+					treeItem.toggleClass('is-collapsed', isCollapsed);
+					collapseIcon?.toggleClass('is-collapsed', isCollapsed);
+
+					if (!isCollapsed) {
+						childContainer = treeItem.createDiv({ cls: 'tree-item-children nav-folder-children' });
+						this.renderItems(childContainer, name);
+					} else if (childContainer) {
+						childContainer.remove();
+						childContainer = null;
 					}
 				}
 			});
 		}
+	}
+
+	async handleFileOpen(name: string, file: FileObj) {
+		if (!file.link) {
+			const newFile = await this.app.vault.create(
+				`${name}.md`,
+				''
+			);
+			file.link = newFile;
+		}
+		this.app.workspace.getLeaf(false).openFile(file.link);
+	}
+
+	createTreeItem(treeItem: HTMLDivElement, name: string, count: number): HTMLDivElement {
+		const treeItemSelf = treeItem.createDiv({
+			cls: 'tree-item-self nav-folder-title is-clickable mod-collapsible'
+		});
+
+		const collapseIcon = treeItemSelf.createDiv({
+			cls: 'tree-item-icon collapse-icon is-collapsed'
+		});
+		setIcon(collapseIcon, 'right-triangle');
+
+		const fileName = treeItemSelf.createDiv({
+			cls: 'tree-item-inner nav-folder-title-content'
+		});
+		fileName.setText(name);
+
+		const linkCount = treeItemSelf.createDiv({
+			cls: 'tree-item-flair-outer tree-item-flair'
+		});
+		linkCount.setText(String(count));
+
+		return treeItemSelf;
 	}
 
 	async onClose() { }
