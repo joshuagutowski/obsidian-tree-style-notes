@@ -5,18 +5,9 @@ import {
 	FrontmatterLinkCache,
 } from "obsidian";
 
-export type NoteObj = {
-	count: number;
-	link: TFile | undefined;
-	linkSet: Map<string, NoteObj>;
-}
-
-export const SortOrder = new Map<string, string>([
-	["NUM_DESC", "Number of links (most to least)"],
-	["NUM_ASC", "Number of links (least to most)"],
-	["ALPH_ASC", "Note name (A to Z)"],
-	["ALPH_DESC", "Note name (Z to A)"],
-])
+import {
+	NoteObj,
+} from "./types";
 
 export class NoteCache {
 	links: Map<string, NoteObj> = new Map<string, NoteObj>;

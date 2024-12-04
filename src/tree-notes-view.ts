@@ -6,12 +6,15 @@ import {
 } from "obsidian";
 
 import {
-	NoteCache,
+	VIEW_TYPE_TREENOTES,
 	NoteObj,
-	SortOrder
+	SortOrder,
+} from "./types"
+
+import {
+	NoteCache,
 } from "./note-cache";
 
-export const VIEW_TYPE_TREENOTES = "tree-notes-view";
 
 export class TreeNotesView extends ItemView {
 	cache: NoteCache = new NoteCache;

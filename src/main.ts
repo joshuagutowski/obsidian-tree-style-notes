@@ -7,9 +7,14 @@ import {
 } from "obsidian";
 
 import {
+	TreeNotesSettings,
+	DEFAULT_SETTINGS,
 	VIEW_TYPE_TREENOTES,
-	TreeNotesView
-} from "./tree-notes-view"
+} from "./types";
+
+import {
+	TreeNotesView,
+} from "./tree-notes-view";
 
 // main plugin
 export default class TreeStyleNotesPlugin extends Plugin {
@@ -78,17 +83,17 @@ export default class TreeStyleNotesPlugin extends Plugin {
 }
 
 // settings
-interface TreeNotesSettings {
-	searchFolder: string;
-	topLevelCutoff: string;
-	includeUncreated: boolean;
-}
-
-const DEFAULT_SETTINGS: TreeNotesSettings = {
-	searchFolder: ".",
-	topLevelCutoff: "3",
-	includeUncreated: true,
-};
+//interface TreeNotesSettings {
+//	searchFolder: string;
+//	topLevelCutoff: string;
+//	includeUncreated: boolean;
+//}
+//
+//const DEFAULT_SETTINGS: TreeNotesSettings = {
+//	searchFolder: ".",
+//	topLevelCutoff: "3",
+//	includeUncreated: true,
+//};
 
 class TreeNotesSettingsTab extends PluginSettingTab {
 	plugin: TreeStyleNotesPlugin;
