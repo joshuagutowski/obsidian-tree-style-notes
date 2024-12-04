@@ -5,10 +5,10 @@ import {
 	FrontmatterLinkCache,
 } from "obsidian";
 
-export type FileObj = {
+export type NoteObj = {
 	count: number;
 	link: TFile | undefined;
-	linkSet: Map<string, FileObj>;
+	linkSet: Map<string, NoteObj>;
 }
 
 export enum SortOrder {
@@ -19,7 +19,7 @@ export enum SortOrder {
 }
 
 export class FilesCache {
-	links: Map<string, FileObj> = new Map<string, FileObj>;
+	links: Map<string, NoteObj> = new Map<string, NoteObj>;
 
 	createCache(files: TFile[], metadataCache: MetadataCache) {
 		for (const file of files) {
@@ -65,31 +65,41 @@ export class FilesCache {
 			this.links.set(name, {
 				count: 0,
 				link: undefined,
-				linkSet: new Map<string, FileObj>
+				linkSet: new Map<string, NoteObj>
 			});
 		}
 	}
 
 	sort(order: SortOrder) {
-		let sortFunc = (a: [string, FileObj], b: [string, FileObj]) => b[1].count - a[1].count
+		let sortFunc = (a: [string, NoteObj], b: [string, NoteObj]) => b[1].count - a[1].count
 
 		switch (order as SortOrder) {
 			case SortOrder.NUM_ASC: {
-				sortFunc = (a: [string, FileObj], b: [string, FileObj]) => (
-					a[1].count - b[1].count
+				sortFunc = (a: [string, NoteObj], b: [string, NoteObj]) => (
+					a[1].count != b[1].count
+						? a[1].count - b[1].count
+						: a[0].localeCompare(b[0])
 				)
 				break
 			}
 			case SortOrder.NUM_DESC: {
-				sortFunc = (a: [string, FileObj], b: [string, FileObj]) => b[1].count - a[1].count
+				sortFunc = (a: [string, NoteObj], b: [string, NoteObj]) => (
+					a[1].count != b[1].count
+						? b[1].count - a[1].count
+						: a[0].localeCompare(b[0])
+				)
 				break
 			}
 			case SortOrder.ALPH_ASC: {
-				sortFunc = (a: [string, FileObj], b: [string, FileObj]) => a[0].localeCompare(b[0])
+				sortFunc = (a: [string, NoteObj], b: [string, NoteObj]) => (
+					a[0].localeCompare(b[0])
+				)
 				break
 			}
 			case SortOrder.ALPH_DESC: {
-				sortFunc = (a: [string, FileObj], b: [string, FileObj]) => b[0].localeCompare(a[0])
+				sortFunc = (a: [string, NoteObj], b: [string, NoteObj]) => (
+					b[0].localeCompare(a[0])
+				)
 				break
 			}
 			default: {
@@ -98,5 +108,9 @@ export class FilesCache {
 		}
 
 		this.links = new Map([...this.links.entries()].sort(sortFunc));
+
+		for (const [, file] of this.links) {
+			file.linkSet = new Map([...file.linkSet.entries()].sort(sortFunc));
+		}
 	}
 }

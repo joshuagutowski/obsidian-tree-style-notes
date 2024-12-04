@@ -6,7 +6,7 @@ import {
 
 import {
 	FilesCache,
-	FileObj,
+	NoteObj,
 	SortOrder
 } from "./file-cache";
 
@@ -100,7 +100,7 @@ export class TreeNotesView extends ItemView {
 		}
 	}
 
-	async handleFileOpen(name: string, file: FileObj) {
+	async handleFileOpen(name: string, file: NoteObj) {
 		if (!file.link) {
 			const newFile = await this.app.vault.create(
 				`${name}.md`,
