@@ -14,7 +14,7 @@ export const VIEW_TYPE_TREENOTES = "tree-notes-view";
 
 export class TreeNotesView extends ItemView {
 	cache: NoteCache = new NoteCache;
-	cutoff: number = 5;
+	cutoff: number = 8;
 	order: SortOrder = SortOrder.NUM_DESC;
 
 	constructor(leaf: WorkspaceLeaf) {
@@ -62,23 +62,27 @@ export class TreeNotesView extends ItemView {
 	}
 
 	async renderItems(container: HTMLDivElement, path: Set<string>, parentName?: string) {
+		//create array to iterate through
 		const links = !parentName
 			? this.cache.links
 			: this.cache.links.get(parentName)!.linkSet;
 
+		// iterate through notes
 		for (const [name, note] of links) {
+			// skip if count below cutoff on top level or if note is already in the path
 			if (!parentName && note.count < this.cutoff) continue;
-
 			if (path.has(name)) continue;
 
+			// determine if this note has no children
 			const isBase = Array.from(note.linkSet.keys()).every(key => path.has(key));
 
+			// create tree item from note
 			const treeItem = container.createDiv({
 				cls: 'tree-item nav-folder is-collapsed'
 			});
+			const treeItemSelf = this.createTreeItem(treeItem, name, note, isBase);
 
-			const treeItemSelf = this.createTreeItem(treeItem, name, note.count, isBase);
-
+			// if note has no children, add a listner to open the note then continue
 			if (isBase) {
 				treeItemSelf.addEventListener('click', async () => {
 					this.handleNoteOpen(name, note);
@@ -86,6 +90,7 @@ export class TreeNotesView extends ItemView {
 				continue;
 			}
 
+			// click event handling
 			let isCollapsed = true;
 			let childContainer: HTMLDivElement | null = null;
 
@@ -122,7 +127,7 @@ export class TreeNotesView extends ItemView {
 		this.app.workspace.getLeaf(false).openFile(note.link);
 	}
 
-	createTreeItem(treeItem: HTMLDivElement, name: string, count: number, isBase: boolean): HTMLDivElement {
+	createTreeItem(treeItem: HTMLDivElement, name: string, note: NoteObj, isBase: boolean): HTMLDivElement {
 		const treeItemSelf = treeItem.createDiv({
 			cls: 'tree-item-self nav-folder-title is-clickable mod-collapsible'
 		});
@@ -138,11 +143,14 @@ export class TreeNotesView extends ItemView {
 			cls: 'tree-item-inner nav-folder-title-content'
 		});
 		noteName.setText(name);
+		if (!note.link) {
+			noteName.style.color = 'var(--nav-item-color-highlighted)';
+		}
 
 		const linkCount = treeItemSelf.createDiv({
 			cls: 'tree-item-flair-outer tree-item-flair'
 		});
-		linkCount.setText(String(count));
+		linkCount.setText(String(note.count));
 
 		return treeItemSelf;
 	}
