@@ -11,12 +11,12 @@ export type NoteObj = {
 	linkSet: Map<string, NoteObj>;
 }
 
-export enum SortOrder {
-	NUM_ASC,
-	NUM_DESC,
-	ALPH_ASC,
-	ALPH_DESC,
-}
+export const SortOrder = new Map<string, string>([
+	["NUM_DESC", "Number of links (most to least)"],
+	["NUM_ASC", "Number of links (least to most)"],
+	["ALPH_ASC", "Note name (A to Z)"],
+	["ALPH_DESC", "Note name (Z to A)"],
+])
 
 export class NoteCache {
 	links: Map<string, NoteObj> = new Map<string, NoteObj>;
@@ -70,19 +70,11 @@ export class NoteCache {
 		}
 	}
 
-	sort(order: SortOrder) {
+	sort(order: string) {
 		let sortFunc = (a: [string, NoteObj], b: [string, NoteObj]) => b[1].count - a[1].count
 
-		switch (order as SortOrder) {
-			case SortOrder.NUM_ASC: {
-				sortFunc = (a: [string, NoteObj], b: [string, NoteObj]) => (
-					a[1].count != b[1].count
-						? a[1].count - b[1].count
-						: a[0].localeCompare(b[0])
-				)
-				break
-			}
-			case SortOrder.NUM_DESC: {
+		switch (order) {
+			case "NUM_DESC": {
 				sortFunc = (a: [string, NoteObj], b: [string, NoteObj]) => (
 					a[1].count != b[1].count
 						? b[1].count - a[1].count
@@ -90,13 +82,21 @@ export class NoteCache {
 				)
 				break
 			}
-			case SortOrder.ALPH_ASC: {
+			case "NUM_ASC": {
+				sortFunc = (a: [string, NoteObj], b: [string, NoteObj]) => (
+					a[1].count != b[1].count
+						? a[1].count - b[1].count
+						: a[0].localeCompare(b[0])
+				)
+				break
+			}
+			case "ALPH_ASC": {
 				sortFunc = (a: [string, NoteObj], b: [string, NoteObj]) => (
 					a[0].localeCompare(b[0])
 				)
 				break
 			}
-			case SortOrder.ALPH_DESC: {
+			case "ALPH_DESC": {
 				sortFunc = (a: [string, NoteObj], b: [string, NoteObj]) => (
 					b[0].localeCompare(a[0])
 				)

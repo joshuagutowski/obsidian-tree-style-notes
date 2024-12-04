@@ -1,7 +1,8 @@
 import {
 	ItemView,
 	WorkspaceLeaf,
-	setIcon
+	setIcon,
+	Menu
 } from "obsidian";
 
 import {
@@ -15,7 +16,7 @@ export const VIEW_TYPE_TREENOTES = "tree-notes-view";
 export class TreeNotesView extends ItemView {
 	cache: NoteCache = new NoteCache;
 	cutoff: number = 8;
-	order: SortOrder = SortOrder.NUM_DESC;
+	order: string = "NUM_DESC";
 
 	constructor(leaf: WorkspaceLeaf) {
 		super(leaf);
@@ -143,6 +144,7 @@ export class TreeNotesView extends ItemView {
 			cls: 'tree-item-inner nav-folder-title-content'
 		});
 		noteName.setText(name);
+		// highlight note if it's a potential note
 		if (!note.link) {
 			noteName.style.color = 'var(--nav-item-color-highlighted)';
 		}
@@ -183,6 +185,9 @@ export class TreeNotesView extends ItemView {
 			}
 		});
 		setIcon(sortButton, 'sort-asc')
+		sortButton.addEventListener('click', async (event) => {
+			this.changeSortOrder(event);
+		});
 
 		// collapse
 		const collapseButton = navButtons.createDiv({
@@ -196,7 +201,7 @@ export class TreeNotesView extends ItemView {
 
 	async createNewNote() {
 		const basename = 'Untitled';
-		const existingNames = new Set<string>();
+		const existingNames = new Set<string>;
 		this.app.vault.getFiles().forEach(file => {
 			if (file.basename.startsWith(basename)) {
 				existingNames.add(file.basename);
@@ -217,6 +222,24 @@ export class TreeNotesView extends ItemView {
 		this.app.workspace.getLeaf(false).openFile(newNote);
 	}
 
+	changeSortOrder(event: MouseEvent) {
+		const sortMenu = new Menu;
+		for (const [order, title] of SortOrder) {
+			sortMenu.addItem((item) => {
+				item.setTitle(title);
+				if (order === this.order) {
+					item.setChecked(true);
+				}
+				item.onClick(() => {
+					this.order = order;
+					this.onOpen();
+				});
+			});
+		}
+		sortMenu.showAtMouseEvent(event);
+	}
+
 	async onClose() { }
 }
+
 
