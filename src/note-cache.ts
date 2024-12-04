@@ -18,7 +18,7 @@ export enum SortOrder {
 	ALPH_DESC,
 }
 
-export class FilesCache {
+export class NoteCache {
 	links: Map<string, NoteObj> = new Map<string, NoteObj>;
 
 	createCache(files: TFile[], metadataCache: MetadataCache) {
@@ -109,8 +109,8 @@ export class FilesCache {
 
 		this.links = new Map([...this.links.entries()].sort(sortFunc));
 
-		for (const [, file] of this.links) {
-			file.linkSet = new Map([...file.linkSet.entries()].sort(sortFunc));
+		for (const [, note] of this.links) {
+			note.linkSet = new Map([...note.linkSet.entries()].sort(sortFunc));
 		}
 	}
 }

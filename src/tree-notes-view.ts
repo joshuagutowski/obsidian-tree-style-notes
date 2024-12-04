@@ -5,15 +5,15 @@ import {
 } from "obsidian";
 
 import {
-	FilesCache,
+	NoteCache,
 	NoteObj,
 	SortOrder
-} from "./file-cache";
+} from "./note-cache";
 
 export const VIEW_TYPE_TREENOTES = "tree-notes-view";
 
 export class TreeNotesView extends ItemView {
-	cache: FilesCache = new FilesCache;
+	cache: NoteCache = new NoteCache;
 	cutoff: number = 5;
 	order: SortOrder = SortOrder.NUM_DESC;
 
@@ -58,20 +58,16 @@ export class TreeNotesView extends ItemView {
 			cls: 'nav-files-container node-insert-event',
 		});
 
-		this.renderItems(navFilesContainer);
+		this.renderItems(navFilesContainer, new Set<string>);
 	}
 
-	async renderItems(container: HTMLDivElement, parentName?: string, path?: Set<string>) {
-		if (!path) {
-			path = new Set<string>;
-		}
-
+	async renderItems(container: HTMLDivElement, path: Set<string>, parentName?: string) {
 		const links = !parentName
 			? this.cache.links
 			: this.cache.links.get(parentName)!.linkSet;
 
-		for (const [name, file] of links) {
-			if (!parentName && file.count < this.cutoff) continue;
+		for (const [name, note] of links) {
+			if (!parentName && note.count < this.cutoff) continue;
 
 			if (path.has(name)) continue;
 
@@ -79,7 +75,7 @@ export class TreeNotesView extends ItemView {
 				cls: 'tree-item nav-folder is-collapsed'
 			});
 
-			const treeItemSelf = this.createTreeItem(treeItem, name, file);
+			const treeItemSelf = this.createTreeItem(treeItem, name, note);
 
 			let isCollapsed = true;
 			let childContainer: HTMLDivElement | null = null;
@@ -88,7 +84,7 @@ export class TreeNotesView extends ItemView {
 
 			treeItemSelf.addEventListener('click', async (event) => {
 				if (event.ctrlKey || event.metaKey) {
-					this.handleFileOpen(name, file);
+					this.handleNoteOpen(name, note);
 				} else {
 					isCollapsed = !isCollapsed;
 					treeItem.toggleClass('is-collapsed', isCollapsed);
@@ -96,7 +92,7 @@ export class TreeNotesView extends ItemView {
 
 					if (!isCollapsed) {
 						childContainer = treeItem.createDiv({ cls: 'tree-item-children nav-folder-children' });
-						this.renderItems(childContainer, name, path!.add(name));
+						this.renderItems(childContainer, path.add(name), name);
 					} else if (childContainer) {
 						childContainer.remove();
 						childContainer = null;
@@ -106,18 +102,18 @@ export class TreeNotesView extends ItemView {
 		}
 	}
 
-	async handleFileOpen(name: string, file: NoteObj) {
-		if (!file.link) {
-			const newFile = await this.app.vault.create(
+	async handleNoteOpen(name: string, note: NoteObj) {
+		if (!note.link) {
+			const newNote = await this.app.vault.create(
 				`${name}.md`,
 				''
 			);
-			file.link = newFile;
+			note.link = newNote;
 		}
-		this.app.workspace.getLeaf(false).openFile(file.link);
+		this.app.workspace.getLeaf(false).openFile(note.link);
 	}
 
-	createTreeItem(treeItem: HTMLDivElement, name: string, file: NoteObj): HTMLDivElement {
+	createTreeItem(treeItem: HTMLDivElement, name: string, note: NoteObj): HTMLDivElement {
 		const treeItemSelf = treeItem.createDiv({
 			cls: 'tree-item-self nav-folder-title is-clickable mod-collapsible'
 		});
@@ -127,15 +123,15 @@ export class TreeNotesView extends ItemView {
 		});
 		setIcon(collapseIcon, 'right-triangle');
 
-		const fileName = treeItemSelf.createDiv({
+		const noteName = treeItemSelf.createDiv({
 			cls: 'tree-item-inner nav-folder-title-content'
 		});
-		fileName.setText(name);
+		noteName.setText(name);
 
 		const linkCount = treeItemSelf.createDiv({
 			cls: 'tree-item-flair-outer tree-item-flair'
 		});
-		linkCount.setText(String(file.count));
+		linkCount.setText(String(note.count));
 
 		return treeItemSelf;
 	}
