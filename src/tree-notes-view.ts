@@ -71,11 +71,20 @@ export class TreeNotesView extends ItemView {
 
 			if (path.has(name)) continue;
 
+			const isBase = Array.from(note.linkSet.keys()).every(key => path.has(key));
+
 			const treeItem = container.createDiv({
 				cls: 'tree-item nav-folder is-collapsed'
 			});
 
-			const treeItemSelf = this.createTreeItem(treeItem, name, note);
+			const treeItemSelf = this.createTreeItem(treeItem, name, note.count, isBase);
+
+			if (isBase) {
+				treeItemSelf.addEventListener('click', async () => {
+					this.handleNoteOpen(name, note);
+				});
+				continue;
+			}
 
 			let isCollapsed = true;
 			let childContainer: HTMLDivElement | null = null;
@@ -113,15 +122,17 @@ export class TreeNotesView extends ItemView {
 		this.app.workspace.getLeaf(false).openFile(note.link);
 	}
 
-	createTreeItem(treeItem: HTMLDivElement, name: string, note: NoteObj): HTMLDivElement {
+	createTreeItem(treeItem: HTMLDivElement, name: string, count: number, isBase: boolean): HTMLDivElement {
 		const treeItemSelf = treeItem.createDiv({
 			cls: 'tree-item-self nav-folder-title is-clickable mod-collapsible'
 		});
 
-		const collapseIcon = treeItemSelf.createDiv({
-			cls: 'tree-item-icon collapse-icon is-collapsed'
-		});
-		setIcon(collapseIcon, 'right-triangle');
+		if (!isBase) {
+			const collapseIcon = treeItemSelf.createDiv({
+				cls: 'tree-item-icon collapse-icon is-collapsed'
+			});
+			setIcon(collapseIcon, 'right-triangle');
+		}
 
 		const noteName = treeItemSelf.createDiv({
 			cls: 'tree-item-inner nav-folder-title-content'
@@ -131,7 +142,7 @@ export class TreeNotesView extends ItemView {
 		const linkCount = treeItemSelf.createDiv({
 			cls: 'tree-item-flair-outer tree-item-flair'
 		});
-		linkCount.setText(String(note.count));
+		linkCount.setText(String(count));
 
 		return treeItemSelf;
 	}
