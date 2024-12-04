@@ -58,10 +58,14 @@ export class TreeNotesView extends ItemView {
 			cls: 'nav-files-container node-insert-event',
 		});
 
-		this.renderItems(navFilesContainer, undefined);
+		this.renderItems(navFilesContainer);
 	}
 
-	async renderItems(container: HTMLDivElement, parentName: string | undefined) {
+	async renderItems(container: HTMLDivElement, parentName?: string, path?: Set<string>) {
+		if (!path) {
+			path = new Set<string>;
+		}
+
 		const links = !parentName
 			? this.cache.links
 			: this.cache.links.get(parentName)!.linkSet;
@@ -69,11 +73,13 @@ export class TreeNotesView extends ItemView {
 		for (const [name, file] of links) {
 			if (!parentName && file.count < this.cutoff) continue;
 
+			if (path.has(name)) continue;
+
 			const treeItem = container.createDiv({
 				cls: 'tree-item nav-folder is-collapsed'
 			});
 
-			const treeItemSelf = this.createTreeItem(treeItem, name, file.count);
+			const treeItemSelf = this.createTreeItem(treeItem, name, file);
 
 			let isCollapsed = true;
 			let childContainer: HTMLDivElement | null = null;
@@ -90,7 +96,7 @@ export class TreeNotesView extends ItemView {
 
 					if (!isCollapsed) {
 						childContainer = treeItem.createDiv({ cls: 'tree-item-children nav-folder-children' });
-						this.renderItems(childContainer, name);
+						this.renderItems(childContainer, name, path!.add(name));
 					} else if (childContainer) {
 						childContainer.remove();
 						childContainer = null;
@@ -111,7 +117,7 @@ export class TreeNotesView extends ItemView {
 		this.app.workspace.getLeaf(false).openFile(file.link);
 	}
 
-	createTreeItem(treeItem: HTMLDivElement, name: string, count: number): HTMLDivElement {
+	createTreeItem(treeItem: HTMLDivElement, name: string, file: NoteObj): HTMLDivElement {
 		const treeItemSelf = treeItem.createDiv({
 			cls: 'tree-item-self nav-folder-title is-clickable mod-collapsible'
 		});
@@ -129,7 +135,7 @@ export class TreeNotesView extends ItemView {
 		const linkCount = treeItemSelf.createDiv({
 			cls: 'tree-item-flair-outer tree-item-flair'
 		});
-		linkCount.setText(String(count));
+		linkCount.setText(String(file.count));
 
 		return treeItemSelf;
 	}
