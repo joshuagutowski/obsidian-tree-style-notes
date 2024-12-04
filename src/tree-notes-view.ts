@@ -18,11 +18,13 @@ import {
 
 export class TreeNotesView extends ItemView {
 	cache: NoteCache = new NoteCache;
-	cutoff: number = 8;
-	order: string = "NUM_DESC";
+	cutoff: number;
+	order: string;
 
-	constructor(leaf: WorkspaceLeaf) {
+	constructor(leaf: WorkspaceLeaf, order: string, cutoff: number) {
 		super(leaf);
+		this.order = order;
+		this.cutoff = cutoff;
 		const container = this.containerEl.children[1];
 		container.removeClass('view-content');
 		container.addClass('workspace-leaf');

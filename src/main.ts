@@ -25,7 +25,7 @@ export default class TreeStyleNotesPlugin extends Plugin {
 
 		this.registerView(
 			VIEW_TYPE_TREENOTES,
-			(leaf) => new TreeNotesView(leaf)
+			(leaf) => new TreeNotesView(leaf, this.settings.sortOrder, 8)
 		);
 
 		// open view ribbon
@@ -82,19 +82,7 @@ export default class TreeStyleNotesPlugin extends Plugin {
 	}
 }
 
-// settings
-//interface TreeNotesSettings {
-//	searchFolder: string;
-//	topLevelCutoff: string;
-//	includeUncreated: boolean;
-//}
-//
-//const DEFAULT_SETTINGS: TreeNotesSettings = {
-//	searchFolder: ".",
-//	topLevelCutoff: "3",
-//	includeUncreated: true,
-//};
-
+//settings
 class TreeNotesSettingsTab extends PluginSettingTab {
 	plugin: TreeStyleNotesPlugin;
 
@@ -126,7 +114,7 @@ class TreeNotesSettingsTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("Link Count Cutoff")
 			.setDesc(
-				"Set how many links are required for a note to show up in the top level, defaults to 3",
+				"Set how many links are required for a note to show up in the top level, defaults to 8",
 			)
 			.addText((text) =>
 				text

@@ -6,12 +6,14 @@ export interface TreeNotesSettings {
 	searchFolder: string;
 	topLevelCutoff: string;
 	includeUncreated: boolean;
+	sortOrder: string;
 }
 
 export const DEFAULT_SETTINGS: TreeNotesSettings = {
 	searchFolder: ".",
-	topLevelCutoff: "3",
+	topLevelCutoff: "8",
 	includeUncreated: true,
+	sortOrder: "NUM_DESC",
 };
 
 export const VIEW_TYPE_TREENOTES = "tree-notes-view";
