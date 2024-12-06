@@ -21,6 +21,7 @@ export class TreeNotesView extends ItemView {
 	plugin: TreeNotesPlugin;
 	cache: NoteCache = new NoteCache;
 	container: Element;
+	noteElements: Map<string, HTMLDivElement> = new Map<string, HTMLDivElement>;
 
 	constructor(leaf: WorkspaceLeaf, plugin: TreeNotesPlugin) {
 		super(leaf);
@@ -71,26 +72,26 @@ export class TreeNotesView extends ItemView {
 	}
 
 	async renderItems(container: HTMLDivElement, path: Set<string>, parentName?: string) {
-		//create array to iterate through
+		// Create array to iterate through
 		const links = !parentName
 			? this.cache.links
 			: this.cache.links.get(parentName)!.linkSet;
 
 		for (const [name, note] of links) {
-			// skip if count below cutoff on top level or if note is already in the path
+			// Skip if count below cutoff on top level or if note is already in the path
 			if (!parentName && note.count < this.plugin.settings.topLevelCutoff) continue;
 			if (path.has(name)) continue;
 
-			// determine if this note has no children
+			// Determine if this note has no children
 			const isBase = Array.from(note.linkSet.keys()).every(key => path.has(key));
 
-			// create tree item from note
+			// Create tree item from note
 			const treeItem = container.createDiv({
 				cls: 'tree-item nav-folder is-collapsed'
 			});
 			const treeItemSelf = this.createTreeItem(treeItem, name, note, isBase);
 
-			// if note has no children, add a listner to open the note skip the rest
+			// If note has no children, add a listner to open the note skip the rest
 			if (isBase) {
 				treeItemSelf.addEventListener('click', async () => {
 					this.handleNoteOpen(name, note);
@@ -98,7 +99,7 @@ export class TreeNotesView extends ItemView {
 				continue;
 			}
 
-			// click event handling
+			// Click event handling
 			let isCollapsed = true;
 			let childContainer: HTMLDivElement | null = null;
 
@@ -114,7 +115,9 @@ export class TreeNotesView extends ItemView {
 
 					if (!isCollapsed) {
 						childContainer = treeItem.createDiv({ cls: 'tree-item-children nav-folder-children' });
-						this.renderItems(childContainer, path.add(name), name);
+						const newPath = new Set(path);
+						newPath.add(name);
+						this.renderItems(childContainer, newPath, name);
 					} else if (childContainer) {
 						childContainer.remove();
 						childContainer = null;
@@ -139,6 +142,10 @@ export class TreeNotesView extends ItemView {
 		const treeItemSelf = treeItem.createDiv({
 			cls: 'tree-item-self nav-folder-title is-clickable mod-collapsible'
 		});
+		// Higlight note if it's currently active
+		if (note.link && note.link == this.plugin.activeFile) {
+			treeItemSelf.addClass('is-active');
+		}
 
 		if (!isBase) {
 			const collapseIcon = treeItemSelf.createDiv({
@@ -151,7 +158,7 @@ export class TreeNotesView extends ItemView {
 			cls: 'tree-item-inner nav-folder-title-content'
 		});
 		noteName.setText(name);
-		// highlight note if it's a potential note
+		// Highlight note name if it's a potential note
 		if (!note.link) {
 			noteName.style.color = 'var(--nav-item-color-highlighted)';
 		}
@@ -172,7 +179,7 @@ export class TreeNotesView extends ItemView {
 			cls: 'nav-buttons-container'
 		});
 
-		// new note
+		// New note
 		const newNoteButton = navButtons.createDiv({
 			cls: 'clickable-icon nav-action-button',
 			attr: {
@@ -184,7 +191,7 @@ export class TreeNotesView extends ItemView {
 			this.createNewUntitledNote();
 		});
 
-		// sort
+		// Sort
 		const sortButton = navButtons.createDiv({
 			cls: 'clickable-icon nav-action-button',
 			attr: {
@@ -196,7 +203,7 @@ export class TreeNotesView extends ItemView {
 			this.changeSortOrder(event);
 		});
 
-		// collapse
+		// Collapse
 		const collapseButton = navButtons.createDiv({
 			cls: 'clickable-icon nav-action-button',
 			attr: {
@@ -240,7 +247,7 @@ export class TreeNotesView extends ItemView {
 				if (order === this.plugin.settings.sortOrder) {
 					item.setChecked(true);
 				}
-				// set order in plugin settings and refresh view
+				// Set order in plugin settings and refresh view
 				item.onClick(() => {
 					this.plugin.settings.sortOrder = order;
 					this.plugin.saveSettings();

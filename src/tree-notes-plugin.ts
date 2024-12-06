@@ -1,5 +1,6 @@
 import {
 	Plugin,
+	TFile,
 	WorkspaceLeaf,
 } from "obsidian";
 
@@ -17,6 +18,7 @@ import {
 export class TreeNotesPlugin extends Plugin {
 	settings: TreeNotesSettings;
 	view: TreeNotesView | null = null;
+	activeFile: TFile | null = null;
 
 	async onload() {
 		await this.loadSettings();
@@ -29,13 +31,17 @@ export class TreeNotesPlugin extends Plugin {
 			}
 		);
 
+		this.activeFile = this.app.workspace.getActiveFile();
 		this.registerEvent(
-			this.app.vault.on('modify', () => {
-				if (this.view) {
-					this.view.renderView();
-				}
+			this.app.workspace.on('active-leaf-change', () => {
+				this.activeFile = this.app.workspace.getActiveFile();
 			})
 		);
+
+		this.registerEvent(this.app.vault.on('create', () => this.view?.renderView()));
+		this.registerEvent(this.app.vault.on('modify', () => this.view?.renderView()));
+		this.registerEvent(this.app.vault.on('rename', () => this.view?.renderView()));
+		this.registerEvent(this.app.vault.on('delete', () => this.view?.renderView()));
 
 		this.addRibbonIcon('list-tree', 'Open tree notes view', () => {
 			this.activateView();
