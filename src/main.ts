@@ -1,3 +1,3 @@
-import { TreeStyleNotesPlugin } from "./tree-notes-plugin";
+import { TreeNotesPlugin } from "./tree-notes-plugin";
 
-export default TreeStyleNotesPlugin;
+export default TreeNotesPlugin;

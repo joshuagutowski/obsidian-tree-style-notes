@@ -70,6 +70,10 @@ export class NoteCache {
 		}
 	}
 
+	clearCache() {
+		this.links = new Map<string, NoteObj>;
+	}
+
 	sort(order: string) {
 		let sortFunc = (a: [string, NoteObj], b: [string, NoteObj]) => b[1].count - a[1].count
 

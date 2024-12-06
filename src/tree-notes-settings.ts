@@ -5,7 +5,7 @@ import {
 } from "obsidian";
 
 import {
-	TreeStyleNotesPlugin
+	TreeNotesPlugin
 } from "./tree-notes-plugin";
 
 export interface TreeNotesSettings {
@@ -24,9 +24,9 @@ export const DEFAULT_SETTINGS: TreeNotesSettings = {
 
 //settings
 export class TreeNotesSettingsTab extends PluginSettingTab {
-	plugin: TreeStyleNotesPlugin;
+	plugin: TreeNotesPlugin;
 
-	constructor(app: App, plugin: TreeStyleNotesPlugin) {
+	constructor(app: App, plugin: TreeNotesPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
@@ -57,8 +57,8 @@ export class TreeNotesSettingsTab extends PluginSettingTab {
 				"Set how many links are required for a note to show up in the top level view, defaults to 4",
 			)
 			.addText((text) => {
-				text.inputEl.type = "number"; // Set the input type to number
-				text.inputEl.min = "0"; // Optional: Set a minimum value
+				text.inputEl.type = "number";
+				text.inputEl.min = "0";
 				text
 					.setPlaceholder("Link Count")
 					.setValue(this.plugin.settings.topLevelCutoff.toString())
@@ -69,6 +69,7 @@ export class TreeNotesSettingsTab extends PluginSettingTab {
 						}
 						this.plugin.settings.topLevelCutoff = parsedValue;
 						await this.plugin.saveSettings();
+						this.plugin.view?.renderView();
 					});
 			});
 

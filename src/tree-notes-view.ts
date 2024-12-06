@@ -2,31 +2,32 @@ import {
 	ItemView,
 	WorkspaceLeaf,
 	setIcon,
-	Menu
+	Menu,
 } from "obsidian";
 
 import {
-	TreeStyleNotesPlugin
+	TreeNotesPlugin,
 } from "./tree-notes-plugin";
 
 import {
 	NoteObj,
 	NoteCache,
-	SortOrder
+	SortOrder,
 } from "./note-cache";
 
 export const VIEW_TYPE_TREENOTES = "tree-notes-view";
 
 export class TreeNotesView extends ItemView {
-	plugin: TreeStyleNotesPlugin;
+	plugin: TreeNotesPlugin;
 	cache: NoteCache = new NoteCache;
+	container: Element;
 
-	constructor(leaf: WorkspaceLeaf, plugin: TreeStyleNotesPlugin) {
+	constructor(leaf: WorkspaceLeaf, plugin: TreeNotesPlugin) {
 		super(leaf);
 		this.plugin = plugin;
-		const container = this.containerEl.children[1];
-		container.removeClass('view-content');
-		container.addClass('workspace-leaf');
+		this.container = this.containerEl.children[1];
+		this.container.removeClass('view-content');
+		this.container.addClass('workspace-leaf');
 	}
 
 	getViewType(): string {
@@ -34,7 +35,7 @@ export class TreeNotesView extends ItemView {
 	}
 
 	getDisplayText(): string {
-		return "Tree Notes View";
+		return "Tree notes view";
 	}
 
 	getIcon(): string {
@@ -42,8 +43,17 @@ export class TreeNotesView extends ItemView {
 	}
 
 	async onOpen() {
-		const container = this.containerEl.children[1];
-		container.empty();
+		await this.renderView();
+	}
+
+	async onClose() {
+		this.container.empty();
+		this.cache.clearCache();
+	}
+
+	async renderView() {
+		this.container.empty();
+		this.cache.clearCache();
 
 		this.cache.createCache(
 			this.app.vault.getFiles(),
@@ -51,15 +61,9 @@ export class TreeNotesView extends ItemView {
 		);
 		this.cache.sort(this.plugin.settings.sortOrder);
 
-		await this.renderView(container);
-	}
+		this.renderHeader(this.container);
 
-	async renderView(container: Element) {
-		// create header
-		this.renderHeader(container);
-
-		// create container
-		const navFilesContainer = container.createDiv({
+		const navFilesContainer = this.container.createDiv({
 			cls: 'nav-files-container node-insert-event',
 		});
 
@@ -200,6 +204,9 @@ export class TreeNotesView extends ItemView {
 			}
 		});
 		setIcon(collapseButton, 'chevrons-down-up')
+		collapseButton.addEventListener('click', async () => {
+			this.renderView();
+		});
 	}
 
 	async createNewUntitledNote() {
@@ -237,14 +244,12 @@ export class TreeNotesView extends ItemView {
 				item.onClick(() => {
 					this.plugin.settings.sortOrder = order;
 					this.plugin.saveSettings();
-					this.onOpen();
+					this.renderView();
 				});
 			});
 		}
 		sortMenu.showAtMouseEvent(event);
 	}
-
-	async onClose() { }
 }
 
 

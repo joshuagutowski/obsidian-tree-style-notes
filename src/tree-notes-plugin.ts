@@ -6,45 +6,54 @@ import {
 import {
 	TreeNotesSettings,
 	DEFAULT_SETTINGS,
-	TreeNotesSettingsTab
+	TreeNotesSettingsTab,
 } from "./tree-notes-settings";
 
 import {
 	TreeNotesView,
-	VIEW_TYPE_TREENOTES
+	VIEW_TYPE_TREENOTES,
 } from "./tree-notes-view";
 
-// main plugin
-export class TreeStyleNotesPlugin extends Plugin {
+export class TreeNotesPlugin extends Plugin {
 	settings: TreeNotesSettings;
+	view: TreeNotesView | null = null;
 
 	async onload() {
 		await this.loadSettings();
 
 		this.registerView(
 			VIEW_TYPE_TREENOTES,
-			(leaf) => new TreeNotesView(leaf, this)
+			(leaf) => {
+				this.view = new TreeNotesView(leaf, this)
+				return this.view
+			}
 		);
 
-		// open view ribbon
-		this.addRibbonIcon('list-tree', 'Tree Style Notes View', () => {
+		this.registerEvent(
+			this.app.vault.on('modify', () => {
+				if (this.view) {
+					this.view.renderView();
+				}
+			})
+		);
+
+		this.addRibbonIcon('list-tree', 'Open tree notes view', () => {
 			this.activateView();
 		});
 
-		// open view command
 		this.addCommand({
 			id: "open-tree-style-notes-view",
-			name: "Open Tree Style Notes View",
+			name: "Open tree notes view",
 			callback: () => {
 				this.activateView();
 			},
 		});
 
-		// settings tab
 		this.addSettingTab(new TreeNotesSettingsTab(this.app, this));
 	}
 
 	async onunload() {
+		this.view = null;
 		this.app.workspace.detachLeavesOfType(VIEW_TYPE_TREENOTES)
 	}
 
