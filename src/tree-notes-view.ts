@@ -6,25 +6,24 @@ import {
 } from "obsidian";
 
 import {
-	VIEW_TYPE_TREENOTES,
-	NoteObj,
-	SortOrder,
-} from "./types"
+	TreeStyleNotesPlugin
+} from "./tree-notes-plugin";
 
 import {
+	NoteObj,
 	NoteCache,
+	SortOrder
 } from "./note-cache";
 
+export const VIEW_TYPE_TREENOTES = "tree-notes-view";
 
 export class TreeNotesView extends ItemView {
+	plugin: TreeStyleNotesPlugin;
 	cache: NoteCache = new NoteCache;
-	cutoff: number;
-	order: string;
 
-	constructor(leaf: WorkspaceLeaf, order: string, cutoff: number) {
+	constructor(leaf: WorkspaceLeaf, plugin: TreeStyleNotesPlugin) {
 		super(leaf);
-		this.order = order;
-		this.cutoff = cutoff;
+		this.plugin = plugin;
 		const container = this.containerEl.children[1];
 		container.removeClass('view-content');
 		container.addClass('workspace-leaf');
@@ -50,7 +49,7 @@ export class TreeNotesView extends ItemView {
 			this.app.vault.getFiles(),
 			this.app.metadataCache
 		);
-		this.cache.sort(this.order);
+		this.cache.sort(this.plugin.settings.sortOrder);
 
 		await this.renderView(container);
 	}
@@ -75,7 +74,7 @@ export class TreeNotesView extends ItemView {
 
 		for (const [name, note] of links) {
 			// skip if count below cutoff on top level or if note is already in the path
-			if (!parentName && note.count < this.cutoff) continue;
+			if (!parentName && note.count < this.plugin.settings.topLevelCutoff) continue;
 			if (path.has(name)) continue;
 
 			// determine if this note has no children
@@ -231,11 +230,13 @@ export class TreeNotesView extends ItemView {
 		for (const [order, title] of SortOrder) {
 			sortMenu.addItem((item) => {
 				item.setTitle(title);
-				if (order === this.order) {
+				if (order === this.plugin.settings.sortOrder) {
 					item.setChecked(true);
 				}
+				// set order in plugin settings and refresh view
 				item.onClick(() => {
-					this.order = order;
+					this.plugin.settings.sortOrder = order;
+					this.plugin.saveSettings();
 					this.onOpen();
 				});
 			});
