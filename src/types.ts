@@ -4,14 +4,14 @@ import {
 
 export interface TreeNotesSettings {
 	searchFolder: string;
-	topLevelCutoff: string;
+	topLevelCutoff: number;
 	includeUncreated: boolean;
 	sortOrder: string;
 }
 
 export const DEFAULT_SETTINGS: TreeNotesSettings = {
 	searchFolder: ".",
-	topLevelCutoff: "8",
+	topLevelCutoff: 4,
 	includeUncreated: true,
 	sortOrder: "NUM_DESC",
 };

@@ -73,7 +73,6 @@ export class TreeNotesView extends ItemView {
 			? this.cache.links
 			: this.cache.links.get(parentName)!.linkSet;
 
-		// iterate through notes
 		for (const [name, note] of links) {
 			// skip if count below cutoff on top level or if note is already in the path
 			if (!parentName && note.count < this.cutoff) continue;
@@ -88,7 +87,7 @@ export class TreeNotesView extends ItemView {
 			});
 			const treeItemSelf = this.createTreeItem(treeItem, name, note, isBase);
 
-			// if note has no children, add a listner to open the note then continue
+			// if note has no children, add a listner to open the note skip the rest
 			if (isBase) {
 				treeItemSelf.addEventListener('click', async () => {
 					this.handleNoteOpen(name, note);
@@ -179,7 +178,7 @@ export class TreeNotesView extends ItemView {
 		});
 		setIcon(newNoteButton, 'edit')
 		newNoteButton.addEventListener('click', async () => {
-			this.createNewNote();
+			this.createNewUntitledNote();
 		});
 
 		// sort
@@ -204,7 +203,7 @@ export class TreeNotesView extends ItemView {
 		setIcon(collapseButton, 'chevrons-down-up')
 	}
 
-	async createNewNote() {
+	async createNewUntitledNote() {
 		const basename = 'Untitled';
 		const existingNames = new Set<string>;
 		this.app.vault.getFiles().forEach(file => {

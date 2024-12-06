@@ -25,7 +25,7 @@ export default class TreeStyleNotesPlugin extends Plugin {
 
 		this.registerView(
 			VIEW_TYPE_TREENOTES,
-			(leaf) => new TreeNotesView(leaf, this.settings.sortOrder, 8)
+			(leaf) => new TreeNotesView(leaf, this.settings.sortOrder, this.settings.topLevelCutoff)
 		);
 
 		// open view ribbon
@@ -114,17 +114,23 @@ class TreeNotesSettingsTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("Link Count Cutoff")
 			.setDesc(
-				"Set how many links are required for a note to show up in the top level, defaults to 8",
+				"Set how many links are required for a note to show up in the top level view, defaults to 4",
 			)
-			.addText((text) =>
+			.addText((text) => {
+				text.inputEl.type = "number"; // Set the input type to number
+				text.inputEl.min = "0"; // Optional: Set a minimum value
 				text
 					.setPlaceholder("Link Count")
-					.setValue(this.plugin.settings.topLevelCutoff)
+					.setValue(this.plugin.settings.topLevelCutoff.toString())
 					.onChange(async (value) => {
-						this.plugin.settings.topLevelCutoff = value;
+						const parsedValue = parseInt(value, 10);
+						if (isNaN(parsedValue)) {
+							return;
+						}
+						this.plugin.settings.topLevelCutoff = parsedValue;
 						await this.plugin.saveSettings();
-					}),
-			);
+					});
+			});
 
 		new Setting(containerEl)
 			.setName("Include Uncreated Notes")
