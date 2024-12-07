@@ -17,38 +17,36 @@ import {
 
 export class TreeNotesPlugin extends Plugin {
 	settings: TreeNotesSettings;
-	view: TreeNotesView | null = null;
-	activeFile: TFile | null = null;
 
 	async onload() {
 		await this.loadSettings();
 
 		this.registerView(
 			VIEW_TYPE_TREENOTES,
-			(leaf) => {
-				this.view = new TreeNotesView(leaf, this)
-				return this.view
-			}
+			(leaf) => new TreeNotesView(leaf, this)
 		);
 
-		this.activeFile = this.app.workspace.getActiveFile();
 		this.registerEvent(
 			this.app.workspace.on('active-leaf-change', () => {
+				const activeView = this.app.workspace.getActiveViewOfType(TreeNotesView);
 				const newActiveFile = this.app.workspace.getActiveFile();
-				this.view?.changeActive(this.activeFile?.basename, newActiveFile?.basename);
-				this.activeFile = newActiveFile;
+				if (newActiveFile) {
+					activeView?.changeActive(newActiveFile.basename);
+				}
 			})
 		);
 
 		this.registerEvent(
-			this.app.vault.on('create', (file: TFile) =>
-				this.view?.changeCreated(file.basename)
-			)
+			this.app.vault.on('create', (file: TFile) => {
+				const activeView = this.app.workspace.getActiveViewOfType(TreeNotesView);
+				activeView?.changeCreated(file.basename)
+			})
 		);
 		this.registerEvent(
-			this.app.vault.on('delete', (file: TFile) =>
-				this.view?.changeDeleted(file.basename)
-			)
+			this.app.vault.on('delete', (file: TFile) => {
+				const activeView = this.app.workspace.getActiveViewOfType(TreeNotesView);
+				activeView?.changeDeleted(file.basename)
+			})
 		);
 
 		this.addRibbonIcon('list-tree', 'Open tree notes view', () => {
@@ -67,7 +65,6 @@ export class TreeNotesPlugin extends Plugin {
 	}
 
 	async onunload() {
-		this.view = null;
 		this.app.workspace.detachLeavesOfType(VIEW_TYPE_TREENOTES)
 	}
 

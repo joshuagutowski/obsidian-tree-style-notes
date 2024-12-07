@@ -107,7 +107,7 @@ export class TreeNotesView extends ItemView {
 			const treeItemSelf = this.createTreeItem(treeItem, name, note, isBase);
 
 			// Higlight note if it's currently active
-			if (note.link && note.link == this.plugin.activeFile) {
+			if (note.link && note.link == this.app.workspace.getActiveFile()) {
 				treeItemSelf.addClass('is-active');
 			}
 
@@ -148,16 +148,14 @@ export class TreeNotesView extends ItemView {
 		}
 	}
 
-	async changeActive(oldNote: string | undefined, newNote: string | undefined) {
+	async changeActive(newNote: string) {
 		for (const [path, div] of this.divCache) {
 			const nameVal = Array.from(path)[path.size - 1];
-			if (nameVal === oldNote) {
-				const treeItemSelf = div.querySelector('.tree-item-self')
-				treeItemSelf?.removeClass('is-active');
-			}
+			const treeItemSelf = div.querySelector('.tree-item-self')
 			if (nameVal === newNote) {
-				const treeItemSelf = div.querySelector('.tree-item-self')
 				treeItemSelf?.addClass('is-active');
+			} else {
+				treeItemSelf?.removeClass('is-active');
 			}
 		}
 	}

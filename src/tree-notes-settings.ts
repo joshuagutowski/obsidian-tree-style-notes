@@ -6,8 +6,12 @@ import {
 } from "obsidian";
 
 import {
-	TreeNotesPlugin
+	TreeNotesPlugin,
 } from "./tree-notes-plugin";
+
+import {
+	TreeNotesView,
+} from "./tree-notes-view";
 
 export interface TreeNotesSettings {
 	rootFolder: string;
@@ -50,7 +54,8 @@ export class TreeNotesSettingsTab extends PluginSettingTab {
 						const normalised = normalizePath(value);
 						this.plugin.settings.rootFolder = normalised;
 						await this.plugin.saveSettings();
-						this.plugin.view?.renderView();
+						const activeView = this.app.workspace.getActiveViewOfType(TreeNotesView);
+						activeView?.renderView();
 					}),
 			);
 
@@ -68,13 +73,12 @@ export class TreeNotesSettingsTab extends PluginSettingTab {
 						const parsedValue = parseInt(value, 10);
 						if (isNaN(parsedValue)) {
 							this.plugin.settings.topLevelCutoff = 4;
-							await this.plugin.saveSettings();
-							this.plugin.view?.renderView();
-							return;
+						} else {
+							this.plugin.settings.topLevelCutoff = parsedValue;
 						}
-						this.plugin.settings.topLevelCutoff = parsedValue;
 						await this.plugin.saveSettings();
-						this.plugin.view?.renderView();
+						const activeView = this.app.workspace.getActiveViewOfType(TreeNotesView);
+						activeView?.renderView();
 					});
 			});
 
@@ -89,7 +93,8 @@ export class TreeNotesSettingsTab extends PluginSettingTab {
 				).onChange(async (value) => {
 					this.plugin.settings.includePotential = value;
 					await this.plugin.saveSettings();
-					this.plugin.view?.renderView();
+					const activeView = this.app.workspace.getActiveViewOfType(TreeNotesView);
+					activeView?.renderView();
 				}),
 			);
 	}
