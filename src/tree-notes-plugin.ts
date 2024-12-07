@@ -34,7 +34,9 @@ export class TreeNotesPlugin extends Plugin {
 		this.activeFile = this.app.workspace.getActiveFile();
 		this.registerEvent(
 			this.app.workspace.on('active-leaf-change', () => {
-				this.activeFile = this.app.workspace.getActiveFile();
+				const newActiveFile = this.app.workspace.getActiveFile();
+				this.view?.changeActive(this.activeFile?.basename, newActiveFile?.basename);
+				this.activeFile = newActiveFile;
 			})
 		);
 

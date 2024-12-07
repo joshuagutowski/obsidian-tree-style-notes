@@ -21,7 +21,7 @@ export class TreeNotesView extends ItemView {
 	plugin: TreeNotesPlugin;
 	cache: NoteCache = new NoteCache;
 	container: Element;
-	noteElements: Map<string, HTMLDivElement> = new Map<string, HTMLDivElement>;
+	divCache: Map<Set<string>, HTMLDivElement> = new Map();
 
 	constructor(leaf: WorkspaceLeaf, plugin: TreeNotesPlugin) {
 		super(leaf);
@@ -80,16 +80,36 @@ export class TreeNotesView extends ItemView {
 		for (const [name, note] of links) {
 			// Skip if count below cutoff on top level or if note is already in the path
 			if (!parentName && note.count < this.plugin.settings.topLevelCutoff) continue;
+
+			// If file is a parent skip, otherwise create a new path with this note
 			if (path.has(name)) continue;
+			const pathWithCurrent = new Set(path);
+			pathWithCurrent.add(name);
 
 			// Determine if this note has no children
 			const isBase = Array.from(note.linkSet.keys()).every(key => path.has(key));
 
 			// Create tree item from note
-			const treeItem = container.createDiv({
-				cls: 'tree-item nav-folder is-collapsed'
-			});
+			let treeItem = this.divCache.get(pathWithCurrent);
+			if (!treeItem) {
+				treeItem = container.createDiv({
+					cls: 'tree-item nav-folder is-collapsed'
+				});
+				this.divCache.set(pathWithCurrent, treeItem);
+			}
+			//const treeItem = container.createDiv({
+			//	cls: 'tree-item nav-folder is-collapsed'
+			//});
+			//let treeItemSelf = this.divCache.get(pathWithCurrent);
+			//if (!treeItemSelf) {
+			//	treeItemSelf = this.createTreeItem(treeItem, name, note, isBase);
+			//	this.divCache.set(pathWithCurrent, treeItemSelf);
+			//}
 			const treeItemSelf = this.createTreeItem(treeItem, name, note, isBase);
+			// Higlight note if it's currently active
+			if (note.link && note.link == this.plugin.activeFile) {
+				treeItemSelf.addClass('is-active');
+			}
 
 			// If note has no children, add a listner to open the note skip the rest
 			if (isBase) {
@@ -105,27 +125,53 @@ export class TreeNotesView extends ItemView {
 
 			const collapseIcon = treeItemSelf.querySelector('.collapse-icon');
 
+			// DEAL WITH TYPING LATER
 			treeItemSelf.addEventListener('click', async (event) => {
 				if (event.ctrlKey || event.metaKey) {
 					this.handleNoteOpen(name, note);
 				} else {
 					isCollapsed = !isCollapsed;
-					treeItem.toggleClass('is-collapsed', isCollapsed);
+					treeItem!.toggleClass('is-collapsed', isCollapsed);
 					collapseIcon?.toggleClass('is-collapsed', isCollapsed);
 
 					if (!isCollapsed) {
-						childContainer = treeItem.createDiv({ cls: 'tree-item-children nav-folder-children' });
-						const newPath = new Set(path);
-						newPath.add(name);
-						this.renderItems(childContainer, newPath, name);
+						childContainer = treeItem!.createDiv({ cls: 'tree-item-children nav-folder-children' });
+						//const newPath = new Set(path);
+						//newPath.add(name);
+						this.renderItems(childContainer, pathWithCurrent, name);
 					} else if (childContainer) {
 						childContainer.remove();
+						//this.divTree.delete(path);
 						childContainer = null;
 					}
 				}
 			});
 		}
 	}
+
+	async changeActive(oldNote: string | undefined, newNote: string | undefined) {
+		for (const [path, div] of this.divCache) {
+			const nameVal = Array.from(path)[path.size - 1];
+			if (nameVal === oldNote) {
+				const treeItemSelf = div.querySelector('.tree-item-self')
+				treeItemSelf?.removeClass('is-active');
+			}
+			if (nameVal === newNote) {
+				const treeItemSelf = div.querySelector('.tree-item-self')
+				treeItemSelf?.addClass('is-active');
+			}
+		}
+	}
+
+	//async changeCreated(note: string) {
+	//	for (const [path, div] of this.divCache) {
+	//		const nameVal = Array.from(path)[path.size - 1];
+	//		if (nameVal === note) {
+	//			const nameDiv = div.querySelector('.tree-item-inner');
+	//			nameDiv.css
+	//		}
+	//	}
+	//}
 
 	async handleNoteOpen(name: string, note: NoteObj) {
 		if (!note.link) {
@@ -142,10 +188,6 @@ export class TreeNotesView extends ItemView {
 		const treeItemSelf = treeItem.createDiv({
 			cls: 'tree-item-self nav-folder-title is-clickable mod-collapsible'
 		});
-		// Higlight note if it's currently active
-		if (note.link && note.link == this.plugin.activeFile) {
-			treeItemSelf.addClass('is-active');
-		}
 
 		if (!isBase) {
 			const collapseIcon = treeItemSelf.createDiv({
