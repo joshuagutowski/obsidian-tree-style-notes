@@ -56,8 +56,13 @@ export class TreeNotesView extends ItemView {
 		this.container.empty();
 		this.cache.clearCache();
 
+		const files = this.app.vault.getMarkdownFiles();
+		const filteredFiles = files.filter(file => {
+			return file.path.startsWith(this.plugin.settings.rootFolder)
+		});
+
 		this.cache.createCache(
-			this.app.vault.getFiles(),
+			filteredFiles,
 			this.app.metadataCache
 		);
 		this.cache.sort(this.plugin.settings.sortOrder);

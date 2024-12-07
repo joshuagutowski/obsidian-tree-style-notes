@@ -56,7 +56,7 @@ export class TreeNotesPlugin extends Plugin {
 		});
 
 		this.addCommand({
-			id: "open-tree-style-notes-view",
+			id: "open-tree-notes-view",
 			name: "Open tree notes view",
 			callback: () => {
 				this.activateView();
