@@ -1,5 +1,6 @@
 import {
 	App,
+	normalizePath,
 	PluginSettingTab,
 	Setting,
 } from "obsidian";
@@ -46,7 +47,8 @@ export class TreeNotesSettingsTab extends PluginSettingTab {
 					.setPlaceholder("Example: folder 1/folder 2")
 					.setValue(this.plugin.settings.rootFolder)
 					.onChange(async (value) => {
-						this.plugin.settings.rootFolder = value;
+						const normalised = normalizePath(value);
+						this.plugin.settings.rootFolder = normalised;
 						await this.plugin.saveSettings();
 						this.plugin.view?.renderView();
 					}),
