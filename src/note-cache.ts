@@ -19,16 +19,18 @@ export const SortOrder = new Map<string, string>([
 ])
 
 export class NoteCache {
-	links: Map<string, NoteObj> = new Map<string, NoteObj>;
+	links: Map<string, NoteObj> = new Map();
 
 	createCache(files: TFile[], metadataCache: MetadataCache) {
 		for (const file of files) {
+			// Create cache entry for this file
 			this.createCacheEntry(file.basename);
 			const currentFile = this.links.get(file.basename);
 			if (currentFile) {
 				currentFile.link = file;
 			}
 
+			// Collect all links to iterate over
 			const fileCache = metadataCache.getFileCache(file);
 			let fileCacheLinks: (LinkCache | FrontmatterLinkCache)[] = [];
 			if (fileCache) {
@@ -40,6 +42,7 @@ export class NoteCache {
 				}
 			}
 
+			// Iterate over all links for this file
 			for (const link of fileCacheLinks) {
 				this.createCacheEntry(link.link);
 				const cacheLink = this.links.get(link.link);
@@ -54,6 +57,7 @@ export class NoteCache {
 			}
 		}
 
+		// Get file counts after cache is built
 		for (const [, file] of this.links) {
 			file.count = file.linkSet.size;
 		}

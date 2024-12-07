@@ -205,7 +205,6 @@ export class TreeNotesView extends ItemView {
 		noteName.setText(name);
 		// Highlight note name if it's a potential note
 		if (!note.link) {
-			//noteName.style.color = 'var(--nav-item-color-highlighted)';
 			noteName.addClass('potential-note');
 		}
 
