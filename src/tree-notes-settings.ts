@@ -10,6 +10,7 @@ import {
 } from "./tree-notes-plugin";
 
 import {
+	VIEW_TYPE_TREENOTES,
 	TreeNotesView,
 } from "./tree-notes-view";
 
@@ -27,7 +28,6 @@ export const DEFAULT_SETTINGS: TreeNotesSettings = {
 	sortOrder: "NUM_DESC",
 };
 
-//settings
 export class TreeNotesSettingsTab extends PluginSettingTab {
 	plugin: TreeNotesPlugin;
 
@@ -51,11 +51,18 @@ export class TreeNotesSettingsTab extends PluginSettingTab {
 					.setPlaceholder("Example: folder 1/folder 2")
 					.setValue(this.plugin.settings.rootFolder)
 					.onChange(async (value) => {
-						const normalised = normalizePath(value);
+						let normalised = normalizePath(value);
+						if (value === "") {
+							normalised = "";
+						}
 						this.plugin.settings.rootFolder = normalised;
 						await this.plugin.saveSettings();
-						const activeView = this.app.workspace.getActiveViewOfType(TreeNotesView);
-						activeView?.renderView();
+						for (let leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_TREENOTES)) {
+							let view = leaf.view;
+							if (view instanceof TreeNotesView) {
+								view.renderView();
+							}
+						}
 					}),
 			);
 
@@ -77,8 +84,12 @@ export class TreeNotesSettingsTab extends PluginSettingTab {
 							this.plugin.settings.topLevelCutoff = parsedValue;
 						}
 						await this.plugin.saveSettings();
-						const activeView = this.app.workspace.getActiveViewOfType(TreeNotesView);
-						activeView?.renderView();
+						for (let leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_TREENOTES)) {
+							let view = leaf.view;
+							if (view instanceof TreeNotesView) {
+								view.renderView();
+							}
+						}
 					});
 			});
 
@@ -93,8 +104,12 @@ export class TreeNotesSettingsTab extends PluginSettingTab {
 				).onChange(async (value) => {
 					this.plugin.settings.includePotential = value;
 					await this.plugin.saveSettings();
-					const activeView = this.app.workspace.getActiveViewOfType(TreeNotesView);
-					activeView?.renderView();
+					for (let leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_TREENOTES)) {
+						let view = leaf.view;
+						if (view instanceof TreeNotesView) {
+							view.renderView();
+						}
+					}
 				}),
 			);
 	}

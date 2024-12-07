@@ -28,24 +28,36 @@ export class TreeNotesPlugin extends Plugin {
 
 		this.registerEvent(
 			this.app.workspace.on('active-leaf-change', () => {
-				const activeView = this.app.workspace.getActiveViewOfType(TreeNotesView);
-				const newActiveFile = this.app.workspace.getActiveFile();
-				if (newActiveFile) {
-					activeView?.changeActive(newActiveFile.basename);
+				const activeFile = this.app.workspace.getActiveFile();
+				for (let leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_TREENOTES)) {
+					let view = leaf.view;
+					if (view instanceof TreeNotesView) {
+						if (activeFile) {
+							view.changeActive(activeFile.basename);
+						}
+					}
 				}
 			})
 		);
 
 		this.registerEvent(
 			this.app.vault.on('create', (file: TFile) => {
-				const activeView = this.app.workspace.getActiveViewOfType(TreeNotesView);
-				activeView?.changeCreated(file.basename)
+				for (let leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_TREENOTES)) {
+					let view = leaf.view;
+					if (view instanceof TreeNotesView) {
+						view.changeCreated(file.basename);
+					}
+				}
 			})
 		);
 		this.registerEvent(
 			this.app.vault.on('delete', (file: TFile) => {
-				const activeView = this.app.workspace.getActiveViewOfType(TreeNotesView);
-				activeView?.changeDeleted(file.basename)
+				for (let leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_TREENOTES)) {
+					let view = leaf.view;
+					if (view instanceof TreeNotesView) {
+						view.changeDeleted(file.basename);
+					}
+				}
 			})
 		);
 

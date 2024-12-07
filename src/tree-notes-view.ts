@@ -148,11 +148,11 @@ export class TreeNotesView extends ItemView {
 		}
 	}
 
-	async changeActive(newNote: string) {
+	async changeActive(note: string) {
 		for (const [path, div] of this.divCache) {
 			const nameVal = Array.from(path)[path.size - 1];
 			const treeItemSelf = div.querySelector('.tree-item-self')
-			if (nameVal === newNote) {
+			if (nameVal === note) {
 				treeItemSelf?.addClass('is-active');
 			} else {
 				treeItemSelf?.removeClass('is-active');
