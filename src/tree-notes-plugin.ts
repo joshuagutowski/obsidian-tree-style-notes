@@ -40,10 +40,16 @@ export class TreeNotesPlugin extends Plugin {
 			})
 		);
 
-		this.registerEvent(this.app.vault.on('create', () => this.view?.renderView()));
-		this.registerEvent(this.app.vault.on('modify', () => this.view?.renderView()));
-		this.registerEvent(this.app.vault.on('rename', () => this.view?.renderView()));
-		this.registerEvent(this.app.vault.on('delete', () => this.view?.renderView()));
+		this.registerEvent(
+			this.app.vault.on('create', (file: TFile) =>
+				this.view?.changeCreated(file.basename)
+			)
+		);
+		this.registerEvent(
+			this.app.vault.on('delete', (file: TFile) =>
+				this.view?.changeDeleted(file.basename)
+			)
+		);
 
 		this.addRibbonIcon('list-tree', 'Open tree notes view', () => {
 			this.activateView();
