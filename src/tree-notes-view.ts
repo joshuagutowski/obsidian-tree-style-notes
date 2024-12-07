@@ -263,7 +263,7 @@ export class TreeNotesView extends ItemView {
 		const refreshButton = navButtons.createDiv({
 			cls: 'clickable-icon nav-action-button',
 			attr: {
-				'aria-label': 'Refresh view'
+				'aria-label': 'Refresh tree'
 			}
 		});
 		setIcon(refreshButton, 'refresh-ccw')
