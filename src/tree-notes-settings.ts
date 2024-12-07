@@ -9,16 +9,16 @@ import {
 } from "./tree-notes-plugin";
 
 export interface TreeNotesSettings {
-	searchFolder: string;
+	rootFolder: string;
 	topLevelCutoff: number;
-	includeUncreated: boolean;
+	includePotential: boolean;
 	sortOrder: string;
 }
 
 export const DEFAULT_SETTINGS: TreeNotesSettings = {
-	searchFolder: ".",
+	rootFolder: "",
 	topLevelCutoff: 4,
-	includeUncreated: true,
+	includePotential: true,
 	sortOrder: "NUM_DESC",
 };
 
@@ -37,34 +37,37 @@ export class TreeNotesSettingsTab extends PluginSettingTab {
 		containerEl.empty();
 
 		new Setting(containerEl)
-			.setName("Notes Folder")
+			.setName("Notes folder")
 			.setDesc(
 				"Set which folder to search in, defaults to main directory",
 			)
 			.addText((text) =>
 				text
-					.setPlaceholder("Folder Name")
-					.setValue(this.plugin.settings.searchFolder)
+					.setPlaceholder("Example: folder 1/folder 2")
+					.setValue(this.plugin.settings.rootFolder)
 					.onChange(async (value) => {
-						this.plugin.settings.searchFolder = value;
+						this.plugin.settings.rootFolder = value;
 						await this.plugin.saveSettings();
+						this.plugin.view?.renderView();
 					}),
 			);
 
 		new Setting(containerEl)
-			.setName("Link Count Cutoff")
+			.setName("Link count cutoff")
 			.setDesc(
-				"Set how many links are required for a note to show up in the top level view, defaults to 4",
+				"Set how many links are required for a note to show up in the top level of the tree, defaults to 4",
 			)
 			.addText((text) => {
 				text.inputEl.type = "number";
 				text.inputEl.min = "0";
 				text
-					.setPlaceholder("Link Count")
 					.setValue(this.plugin.settings.topLevelCutoff.toString())
 					.onChange(async (value) => {
 						const parsedValue = parseInt(value, 10);
 						if (isNaN(parsedValue)) {
+							this.plugin.settings.topLevelCutoff = 4;
+							await this.plugin.saveSettings();
+							this.plugin.view?.renderView();
 							return;
 						}
 						this.plugin.settings.topLevelCutoff = parsedValue;
@@ -74,16 +77,17 @@ export class TreeNotesSettingsTab extends PluginSettingTab {
 			});
 
 		new Setting(containerEl)
-			.setName("Include Uncreated Notes")
+			.setName("Include uncreated notes")
 			.setDesc(
-				"Set whether notes which are not yet created should be included",
+				"Set whether notes which don't exist yet, but are linked in notes which do, should be included",
 			)
 			.addToggle((ToggleComponent) =>
 				ToggleComponent.setValue(
-					this.plugin.settings.includeUncreated,
+					this.plugin.settings.includePotential,
 				).onChange(async (value) => {
-					this.plugin.settings.includeUncreated = value;
+					this.plugin.settings.includePotential = value;
 					await this.plugin.saveSettings();
+					this.plugin.view?.renderView();
 				}),
 			);
 	}
