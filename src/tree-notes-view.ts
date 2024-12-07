@@ -63,7 +63,8 @@ export class TreeNotesView extends ItemView {
 
 		this.cache.createCache(
 			filteredFiles,
-			this.app.metadataCache
+			this.app.metadataCache,
+			this.plugin.settings.includePotential
 		);
 		this.cache.sort(this.plugin.settings.sortOrder);
 
