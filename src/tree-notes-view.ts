@@ -55,10 +55,11 @@ export class TreeNotesView extends ItemView {
 
 	async renderView() {
 		this.container.empty();
+		this.divCache.clear();
 		this.cache.clearCache();
 
 		const files = this.app.vault.getMarkdownFiles();
-		const filteredFiles = files.filter(file => {
+		const filteredFiles = files.filter((file) => {
 			return file.path.startsWith(this.plugin.settings.rootFolder)
 		});
 
@@ -84,37 +85,41 @@ export class TreeNotesView extends ItemView {
 			? this.cache.links
 			: this.cache.links.get(parentName)!.linkSet;
 
+		if (!links) {
+			console.error('Error: parentName does not exist in note cache')
+			return;
+		}
+
 		for (const [name, note] of links) {
 			// Skip if count below cutoff on top level or if note is already in the path
 			if (!parentName && note.count < this.plugin.settings.topLevelCutoff) continue;
-
 			// If file is a parent skip, otherwise create a new path with this note
 			if (path.has(name)) continue;
-			const pathWithCurrent = new Set(path);
-			pathWithCurrent.add(name);
+
+			const currentPath = new Set(path);
+			currentPath.add(name);
 
 			// Determine if this note has no children
 			const isBase = Array.from(note.linkSet.keys()).every(key => path.has(key));
 
 			// Read item from cache, or create it and cache it
-			let treeItem = this.divCache.get(pathWithCurrent);
-			if (!treeItem) {
-				treeItem = container.createDiv({
-					cls: 'tree-item nav-folder is-collapsed'
-				});
-				this.divCache.set(pathWithCurrent, treeItem);
+			let treeItem = this.divCache.get(currentPath) ?? container.createDiv({
+				cls: 'tree-item nav-folder is-collapsed'
+			});
+			if (!this.divCache.has(currentPath)) {
+				this.divCache.set(currentPath, treeItem);
 			}
 
-			const treeItemSelf = this.createTreeItem(treeItem, name, note, isBase);
+			const treeItemLabel = this.createTreeItemLabel(treeItem, name, note, isBase);
 
 			// Higlight note if it's currently active
 			if (note.link && note.link == this.app.workspace.getActiveFile()) {
-				treeItemSelf.addClass('is-active');
+				treeItem.addClass('is-active');
 			}
 
 			// If note has no children, add a listner to open the note skip the rest
 			if (isBase) {
-				treeItemSelf.addEventListener('click', async () => {
+				treeItemLabel.addEventListener('click', async () => {
 					this.handleNoteOpen(name, note);
 				});
 				continue;
@@ -124,60 +129,29 @@ export class TreeNotesView extends ItemView {
 			let isCollapsed = true;
 			let childContainer: HTMLDivElement | null = null;
 
-			const collapseIcon = treeItemSelf.querySelector('.collapse-icon');
-
-			treeItemSelf.addEventListener('click', async (event) => {
+			treeItemLabel.addEventListener('click', async (event) => {
 				if (event.ctrlKey || event.metaKey) {
 					this.handleNoteOpen(name, note);
 				} else {
 					isCollapsed = !isCollapsed;
-					treeItem!.toggleClass('is-collapsed', isCollapsed);
-					collapseIcon?.toggleClass('is-collapsed', isCollapsed);
+					treeItem.toggleClass('is-collapsed', isCollapsed);
+					treeItemLabel.querySelector('.collapse-icon')?.
+						toggleClass('is-collapsed', isCollapsed);
 
 					if (!isCollapsed) {
-						childContainer = treeItem!.createDiv({
-							cls: 'tree-item-children nav-folder-children'
-						});
-						this.renderItems(childContainer, pathWithCurrent, name);
+						if (childContainer) {
+							childContainer.show();
+						} else {
+							childContainer = treeItem.createDiv({
+								cls: 'tree-item-children nav-folder-children'
+							});
+							this.renderItems(childContainer, currentPath, name);
+						}
 					} else if (childContainer) {
-						childContainer.remove();
-						childContainer = null;
-						this.divCache.delete(path);
+						childContainer.hide();
 					}
 				}
 			});
-		}
-	}
-
-	async changeActive(note: string | undefined) {
-		for (const [path, div] of this.divCache) {
-			const nameVal = Array.from(path)[path.size - 1];
-			const treeItemSelf = div.querySelector('.tree-item-self')
-			if (nameVal === note) {
-				treeItemSelf?.addClass('is-active');
-			} else {
-				treeItemSelf?.removeClass('is-active');
-			}
-		}
-	}
-
-	async changeCreated(note: string) {
-		for (const [path, div] of this.divCache) {
-			const nameVal = Array.from(path)[path.size - 1];
-			if (nameVal === note) {
-				const nameDiv = div.querySelector('.tree-item-inner');
-				nameDiv?.removeClass('potential-note')
-			}
-		}
-	}
-
-	async changeDeleted(note: string) {
-		for (const [path, div] of this.divCache) {
-			const nameVal = Array.from(path)[path.size - 1];
-			if (nameVal === note) {
-				const nameDiv = div.querySelector('.tree-item-inner');
-				nameDiv?.addClass('potential-note')
-			}
 		}
 	}
 
@@ -192,7 +166,41 @@ export class TreeNotesView extends ItemView {
 		this.app.workspace.getLeaf(false).openFile(note.link);
 	}
 
-	createTreeItem(treeItem: HTMLDivElement, name: string, note: NoteObj, isBase: boolean): HTMLDivElement {
+	changeActive(noteName: string | undefined) {
+		for (const [path, div] of this.divCache) {
+			const treeItemLabel = div.querySelector('.tree-item-self')
+			if (treeItemLabel) {
+				treeItemLabel.removeClass('is-active');
+
+				const nameVal = Array.from(path)[path.size - 1];
+				if (nameVal === noteName) {
+					treeItemLabel.addClass('is-active');
+				}
+			}
+		}
+	}
+
+	changeCreated(noteName: string) {
+		for (const [path, div] of this.divCache) {
+			const nameVal = Array.from(path)[path.size - 1];
+			if (nameVal === noteName) {
+				const treeItemName = div.querySelector('.tree-item-inner');
+				treeItemName?.removeClass('potential-note')
+			}
+		}
+	}
+
+	changeDeleted(noteName: string) {
+		for (const [path, div] of this.divCache) {
+			const nameVal = Array.from(path)[path.size - 1];
+			if (nameVal === noteName) {
+				const treeItemName = div.querySelector('.tree-item-inner');
+				treeItemName?.addClass('potential-note')
+			}
+		}
+	}
+
+	createTreeItemLabel(treeItem: HTMLDivElement, name: string, note: NoteObj, isBase: boolean): HTMLDivElement {
 		const treeItemSelf = treeItem.createDiv({
 			cls: 'tree-item-self nav-folder-title is-clickable mod-collapsible'
 		});
@@ -262,7 +270,7 @@ export class TreeNotesView extends ItemView {
 		});
 		setIcon(collapseButton, 'chevrons-down-up')
 		collapseButton.addEventListener('click', async () => {
-			this.renderView();
+			this.collapseAll();
 		});
 
 		const refreshButton = navButtons.createDiv({
@@ -317,6 +325,19 @@ export class TreeNotesView extends ItemView {
 			});
 		}
 		sortMenu.showAtMouseEvent(event);
+	}
+
+	collapseAll() {
+		this.container.empty();
+		this.divCache.clear();
+
+		this.renderHeader(this.container);
+
+		const navFilesContainer = this.container.createDiv({
+			cls: 'nav-files-container node-insert-event',
+		});
+
+		this.renderItems(navFilesContainer, new Set<string>);
 	}
 }
 

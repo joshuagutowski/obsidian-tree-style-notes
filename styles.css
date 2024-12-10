@@ -1,3 +1,4 @@
 .potential-note {
-	color: var(--nav-item-color-highlighted) !important;
+	color: var(--nav-item-color-highlighted);
+	opacity: 0.9;
 }
