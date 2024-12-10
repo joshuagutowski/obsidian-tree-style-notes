@@ -59,4 +59,4 @@ At the moment, when renaming notes, creating new notes which don’t exist in th
 
 ## Contributing
 
-This is my first independent programming project, so I’m not sure yet how I will deal with contributions. You’re welcome to make a pull request, but there is no guarantee I will merge it, let alone respond.
+This is my first independent programming project, so I’m not sure yet how I will deal with contributions. You’re welcome to make a pull request or open an issue, but there is no guarantee I will merge it, let alone respond.
