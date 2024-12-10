@@ -49,11 +49,11 @@ Download the release files (excluding the source code), and put them into a fold
 
 ## Planned Features/Improvements
 
+- [x] Retain open state within closed parent objects
 - [ ] Handle updating notes better (renaming, links, etc.)
-- [ ] Retain open state within closed parent objects
+- [ ] Add excluded folders/notes
 - [ ] Open a note as a top level note in a new pane (for multiple trees at once)
 - [ ] Add the ability to search
-- [ ] Add excluded folders/notes
 
 ## Contributing
 
