@@ -53,8 +53,21 @@ export class NoteCache {
 			}
 		}
 
-		// Get file counts after cache is built
-		this.getFileCounts(includePotential);
+		// Get file counts after cache is built and remove potential notes in set
+		for (const [name, note] of this.links) {
+			if (!includePotential) {
+				if (!note.link) {
+					this.links.delete(name);
+					continue;
+				}
+				for (const [childName, childFile] of note.linkSet) {
+					if (!childFile.link) {
+						note.linkSet.delete(childName);
+					}
+				}
+			}
+			note.count = note.linkSet.size;
+		}
 	}
 
 	getCacheEntry(name: string): NoteObj | undefined {
@@ -66,23 +79,6 @@ export class NoteCache {
 			});
 		}
 		return this.links.get(name);
-	}
-
-	getFileCounts(includePotential: boolean) {
-		for (const [name, file] of this.links) {
-			if (!includePotential) {
-				if (!file.link) {
-					this.links.delete(name);
-					continue;
-				}
-				for (const [childName, childFile] of file.linkSet) {
-					if (!childFile.link) {
-						file.linkSet.delete(childName);
-					}
-				}
-			}
-			file.count = file.linkSet.size;
-		}
 	}
 
 	sort(order: string) {
