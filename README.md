@@ -47,7 +47,7 @@ At the moment, when renaming notes, creating new notes which don’t exist in th
 
 Download the release files (excluding the source code), and put them into a folder named ‘obsidian-tree-style-notes’ in your .obsidian/plugins/ folder, and activate it in the community plugins tab.
 
-## Planned Features
+## Planned Features/Improvements
 
 - [ ] Handle updating notes better (renaming, links, etc.)
 - [ ] Retain open state within closed parent objects
