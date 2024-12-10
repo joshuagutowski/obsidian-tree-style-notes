@@ -49,6 +49,7 @@ export class TreeNotesView extends ItemView {
 
 	async onClose() {
 		this.container.empty();
+		this.divCache.clear();
 		this.cache.clearCache();
 	}
 
@@ -148,7 +149,7 @@ export class TreeNotesView extends ItemView {
 		}
 	}
 
-	async changeActive(note: string) {
+	async changeActive(note: string | undefined) {
 		for (const [path, div] of this.divCache) {
 			const nameVal = Array.from(path)[path.size - 1];
 			const treeItemSelf = div.querySelector('.tree-item-self')

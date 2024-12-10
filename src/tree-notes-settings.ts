@@ -9,11 +9,6 @@ import {
 	TreeNotesPlugin,
 } from "./tree-notes-plugin";
 
-import {
-	VIEW_TYPE_TREENOTES,
-	TreeNotesView,
-} from "./tree-notes-view";
-
 export interface TreeNotesSettings {
 	rootFolder: string;
 	topLevelCutoff: number;
@@ -51,18 +46,13 @@ export class TreeNotesSettingsTab extends PluginSettingTab {
 					.setPlaceholder("Example: folder 1/folder 2")
 					.setValue(this.plugin.settings.rootFolder)
 					.onChange(async (value) => {
-						let normalised = normalizePath(value);
+						let normalizedPath = normalizePath(value);
 						if (value === "") {
-							normalised = "";
+							normalizedPath = "";
 						}
-						this.plugin.settings.rootFolder = normalised;
+						this.plugin.settings.rootFolder = normalizedPath;
 						await this.plugin.saveSettings();
-						for (let leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_TREENOTES)) {
-							let view = leaf.view;
-							if (view instanceof TreeNotesView) {
-								view.renderView();
-							}
-						}
+						this.plugin.refreshView((view) => view.renderView());
 					}),
 			);
 
@@ -84,12 +74,7 @@ export class TreeNotesSettingsTab extends PluginSettingTab {
 							this.plugin.settings.topLevelCutoff = parsedValue;
 						}
 						await this.plugin.saveSettings();
-						for (let leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_TREENOTES)) {
-							let view = leaf.view;
-							if (view instanceof TreeNotesView) {
-								view.renderView();
-							}
-						}
+						this.plugin.refreshView((view) => view.renderView());
 					});
 			});
 
@@ -104,12 +89,7 @@ export class TreeNotesSettingsTab extends PluginSettingTab {
 				).onChange(async (value) => {
 					this.plugin.settings.includePotential = value;
 					await this.plugin.saveSettings();
-					for (let leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_TREENOTES)) {
-						let view = leaf.view;
-						if (view instanceof TreeNotesView) {
-							view.renderView();
-						}
-					}
+					this.plugin.refreshView((view) => view.renderView());
 				}),
 			);
 	}

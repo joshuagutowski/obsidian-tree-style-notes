@@ -28,57 +28,44 @@ export class TreeNotesPlugin extends Plugin {
 
 		this.registerEvent(
 			this.app.workspace.on('active-leaf-change', () => {
-				const activeFile = this.app.workspace.getActiveFile();
-				for (let leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_TREENOTES)) {
-					let view = leaf.view;
-					if (view instanceof TreeNotesView) {
-						if (activeFile) {
-							view.changeActive(activeFile.basename);
-						}
-					}
-				}
+				this.refreshView(
+					(view) => view.changeActive(
+						this.app.workspace.getActiveFile()?.basename
+					)
+				);
 			})
 		);
 
 		this.registerEvent(
-			this.app.vault.on('create', (file: TFile) => {
-				for (let leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_TREENOTES)) {
-					let view = leaf.view;
-					if (view instanceof TreeNotesView) {
-						view.changeCreated(file.basename);
-					}
-				}
-			})
-		);
-		this.registerEvent(
-			this.app.vault.on('delete', (file: TFile) => {
-				for (let leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_TREENOTES)) {
-					let view = leaf.view;
-					if (view instanceof TreeNotesView) {
-						view.changeDeleted(file.basename);
-					}
-				}
-			})
+			this.app.vault.on('create', (file: TFile) =>
+				this.refreshView(
+					(view) => view.changeCreated(file.basename)
+				)
+			)
 		);
 
-		this.addRibbonIcon('list-tree', 'Open tree notes view', () => {
-			this.activateView();
-		});
+		this.registerEvent(
+			this.app.vault.on('delete', (file: TFile) =>
+				this.refreshView(
+					(view) => view.changeDeleted(file.basename)
+				)
+			)
+		);
+
+		this.addRibbonIcon('list-tree', 'Open tree notes view', () =>
+			this.activateView()
+		);
 
 		this.addCommand({
 			id: "open-tree-notes-view",
 			name: "Open tree notes view",
-			callback: () => {
-				this.activateView();
-			},
+			callback: () => this.activateView(),
 		});
 
 		this.addSettingTab(new TreeNotesSettingsTab(this.app, this));
 	}
 
-	async onunload() {
-		this.app.workspace.detachLeavesOfType(VIEW_TYPE_TREENOTES)
-	}
+	async onunload() { }
 
 	async activateView() {
 		const { workspace } = this.app;
@@ -97,6 +84,15 @@ export class TreeNotesPlugin extends Plugin {
 		}
 
 		workspace.revealLeaf(leaf);
+	}
+
+	async refreshView(callback: (view: TreeNotesView) => void) {
+		for (let leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_TREENOTES)) {
+			let view = leaf.view;
+			if (view instanceof TreeNotesView) {
+				callback(view);
+			}
+		}
 	}
 
 	async loadSettings() {
