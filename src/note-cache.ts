@@ -24,8 +24,7 @@ export class NoteCache {
 	createCache(files: TFile[], metadataCache: MetadataCache, includePotential: boolean) {
 		for (const file of files) {
 			// Create cache entry for this file
-			this.createCacheEntry(file.basename);
-			const currentFile = this.links.get(file.basename);
+			const currentFile = this.getCacheEntry(file.basename);
 			if (currentFile) {
 				currentFile.link = file;
 			}
@@ -33,19 +32,16 @@ export class NoteCache {
 			// Collect all links to iterate over
 			const fileCache = metadataCache.getFileCache(file);
 			let fileCacheLinks: (LinkCache | FrontmatterLinkCache)[] = [];
-			if (fileCache) {
-				if (fileCache.links) {
-					fileCacheLinks = [...fileCacheLinks, ...fileCache.links]
-				}
-				if (fileCache.frontmatterLinks) {
-					fileCacheLinks = [...fileCacheLinks, ...fileCache.frontmatterLinks]
-				}
+			if (fileCache && fileCache.links) {
+				fileCacheLinks = [...fileCacheLinks, ...fileCache.links]
+			}
+			if (fileCache && fileCache.frontmatterLinks) {
+				fileCacheLinks = [...fileCacheLinks, ...fileCache.frontmatterLinks]
 			}
 
 			// Iterate over all links for this file
 			for (const link of fileCacheLinks) {
-				this.createCacheEntry(link.link);
-				const cacheLink = this.links.get(link.link);
+				const cacheLink = this.getCacheEntry(link.link);
 				if (currentFile && cacheLink) {
 					if (!currentFile.linkSet.has(link.link)) {
 						currentFile.linkSet.set(link.link, cacheLink);
@@ -58,6 +54,21 @@ export class NoteCache {
 		}
 
 		// Get file counts after cache is built
+		this.getFileCounts(includePotential);
+	}
+
+	getCacheEntry(name: string): NoteObj | undefined {
+		if (!this.links.has(name)) {
+			this.links.set(name, {
+				count: 0,
+				link: undefined,
+				linkSet: new Map<string, NoteObj>
+			});
+		}
+		return this.links.get(name);
+	}
+
+	getFileCounts(includePotential: boolean) {
 		for (const [name, file] of this.links) {
 			if (!includePotential) {
 				if (!file.link) {
@@ -74,22 +85,8 @@ export class NoteCache {
 		}
 	}
 
-	createCacheEntry(name: string) {
-		if (!this.links.has(name)) {
-			this.links.set(name, {
-				count: 0,
-				link: undefined,
-				linkSet: new Map<string, NoteObj>
-			});
-		}
-	}
-
-	clearCache() {
-		this.links = new Map<string, NoteObj>;
-	}
-
 	sort(order: string) {
-		let sortFunc = (a: [string, NoteObj], b: [string, NoteObj]) => b[1].count - a[1].count
+		let sortFunc: (a: [string, NoteObj], b: [string, NoteObj]) => number
 
 		switch (order) {
 			case "NUM_DESC": {
@@ -121,6 +118,11 @@ export class NoteCache {
 				break
 			}
 			default: {
+				sortFunc = (a: [string, NoteObj], b: [string, NoteObj]) => (
+					a[1].count != b[1].count
+						? b[1].count - a[1].count
+						: a[0].localeCompare(b[0])
+				)
 				break
 			}
 		}
@@ -130,5 +132,9 @@ export class NoteCache {
 		for (const [, note] of this.links) {
 			note.linkSet = new Map([...note.linkSet.entries()].sort(sortFunc));
 		}
+	}
+
+	clearCache() {
+		this.links = new Map<string, NoteObj>;
 	}
 }
