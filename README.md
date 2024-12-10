@@ -10,10 +10,6 @@ But what I always found frustrating was that there wasn't a clearer overview of 
 
 So I created Tree Style Notes, a view for Obsidian where you can see all your notes, and click on them to see the notes they link to, or which link to them.
 
-## Quick Start
-
-Simply download the release files (excluding the source code), and put it into an ‘obsidian-tree-style-notes’ folder in your .obsidian/plugins/ folder, and activate it in the community plugins tab.
-
 ## The Method
 
 This plugin is created around the idea of using links instead of tags and the zettelkasten approach where all your notes are in the same folder. By linking to topics or ideas which are related to the note you are writing at the moment, it can help guide you on what to research or write about next and show you topics which your ideas are clustering around, which could potentially become Maps of Content.
@@ -46,6 +42,10 @@ In the settings you can make the following changes:
 ### Rough Edges
 
 At the moment, when renaming notes, creating new notes which don’t exist in the tree already, or adding links within notes, the tree won’t automatically update to reflect these changes (I plan to implement this, but for as long as it’s not, rather than refreshing the whole tree every time you edit a file, it just does nothing). You can use the refresh button to update the tree to reflect any changes you’ve made.
+
+## Manual Install
+
+Download the release files (excluding the source code), and put them into a folder named ‘obsidian-tree-style-notes’ in your .obsidian/plugins/ folder, and activate it in the community plugins tab.
 
 ## Planned Features
 
