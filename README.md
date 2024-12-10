@@ -45,7 +45,9 @@ At the moment, when renaming notes, creating new notes which don’t exist in th
 
 ## Manual Install
 
-Download the release files (excluding the source code), and put them into a folder named ‘obsidian-tree-style-notes’ in your .obsidian/plugins/ folder, and activate it in the community plugins tab.
+1. Download the release files (excluding the source code),
+2. Put the files into a folder named `obsidian-tree-style-notes` in your `.obsidian/plugins/` folder
+3. Activate the plugin from your Obsidian's community plugins tab in settings.
 
 ## Planned Features/Improvements
 
