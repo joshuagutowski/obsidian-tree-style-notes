@@ -36,7 +36,7 @@ export class TreeNotesView extends ItemView {
 	}
 
 	getDisplayText(): string {
-		return "Tree notes view";
+		return "Tree notes";
 	}
 
 	getIcon(): string {
