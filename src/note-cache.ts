@@ -23,38 +23,11 @@ export class NoteCache {
 
 	createCache(files: TFile[], metadataCache: MetadataCache, includePotential: boolean) {
 		for (const file of files) {
-			// Create cache entry for this file
-			const currentFile = this.getCacheEntry(file.basename);
-			if (currentFile) {
-				currentFile.link = file;
-			}
-
-			// Collect all links to iterate over
-			const fileCache = metadataCache.getFileCache(file);
-			let fileCacheLinks: (LinkCache | FrontmatterLinkCache)[] = [];
-			if (fileCache && fileCache.links) {
-				fileCacheLinks = [...fileCacheLinks, ...fileCache.links]
-			}
-			if (fileCache && fileCache.frontmatterLinks) {
-				fileCacheLinks = [...fileCacheLinks, ...fileCache.frontmatterLinks]
-			}
-
-			// Iterate over all links for this file
-			for (const link of fileCacheLinks) {
-				const cacheLink = this.getCacheEntry(link.link);
-				if (currentFile && cacheLink) {
-					if (!currentFile.linkSet.has(link.link)) {
-						currentFile.linkSet.set(link.link, cacheLink);
-					}
-					if (!cacheLink.linkSet.has(file.basename)) {
-						cacheLink.linkSet.set(file.basename, currentFile)
-					}
-				}
-			}
+			this.makeEntryFromFile(file, metadataCache);
 		}
 
-		// Get file counts after cache is built and remove potential notes in set
 		for (const [name, note] of this.links) {
+			// If !includePotential remove potenial notes from cache
 			if (!includePotential) {
 				if (!note.link) {
 					this.links.delete(name);
@@ -66,7 +39,39 @@ export class NoteCache {
 					}
 				}
 			}
+			// Get file counts
 			note.count = note.linkSet.size;
+		}
+	}
+
+	makeEntryFromFile(file: TFile, metadataCache: MetadataCache) {
+		// Create cache entry for this file
+		const currentFile = this.getCacheEntry(file.basename);
+		if (currentFile) {
+			currentFile.link = file;
+		}
+
+		// Collect all links to iterate over
+		const fileCache = metadataCache.getFileCache(file);
+		let fileCacheLinks: (LinkCache | FrontmatterLinkCache)[] = [];
+		if (fileCache && fileCache.links) {
+			fileCacheLinks = [...fileCacheLinks, ...fileCache.links]
+		}
+		if (fileCache && fileCache.frontmatterLinks) {
+			fileCacheLinks = [...fileCacheLinks, ...fileCache.frontmatterLinks]
+		}
+
+		// Iterate over all links for this file
+		for (const link of fileCacheLinks) {
+			const cacheLink = this.getCacheEntry(link.link);
+			if (currentFile && cacheLink) {
+				if (!currentFile.linkSet.has(link.link)) {
+					currentFile.linkSet.set(link.link, cacheLink);
+				}
+				if (!cacheLink.linkSet.has(file.basename)) {
+					cacheLink.linkSet.set(file.basename, currentFile)
+				}
+			}
 		}
 	}
 
@@ -91,6 +96,27 @@ export class NoteCache {
 					noteObj.linkSet.set(newName, note);
 					noteObj.linkSet.delete(oldName);
 				}
+			}
+		}
+	}
+
+	updateCacheEntry(file: TFile, metadataCache: MetadataCache) {
+		const cacheEntry = this.links.get(file.basename);
+		let oldLinks: NoteObj[] = [];
+		if (cacheEntry) {
+			oldLinks = Array.from(cacheEntry.linkSet.values());
+			cacheEntry.linkSet.clear();
+			for (const note of oldLinks) {
+				note.linkSet.delete(file.basename);
+				note.count = note.linkSet.size;
+			}
+		}
+
+		this.makeEntryFromFile(file, metadataCache);
+		const newCacheEntry = this.links.get(file.basename);
+		if (newCacheEntry) {
+			for (const [, note] of newCacheEntry.linkSet) {
+				note.linkSet.set(file.basename, newCacheEntry)
 			}
 		}
 	}

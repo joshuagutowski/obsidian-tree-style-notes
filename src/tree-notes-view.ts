@@ -211,6 +211,16 @@ export class TreeNotesView extends ItemView {
 		}
 	}
 
+	handleModify(noteName: string) {
+		for (const [path, div] of this.divCache) {
+			const nameInPath = path[path.length - 1]
+			if (nameInPath === noteName) {
+				const treeItemName = div.querySelector('.tree-item-inner');
+				treeItemName?.addClass('potential-note')
+			}
+		}
+	}
+
 	createTreeItemLabel(treeItem: HTMLDivElement, name: string, note: NoteObj, isBase: boolean): HTMLDivElement {
 		const treeItemSelf = treeItem.createDiv({
 			cls: 'tree-item-self nav-folder-title is-clickable mod-collapsible'

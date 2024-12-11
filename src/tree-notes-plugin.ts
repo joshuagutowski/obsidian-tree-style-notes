@@ -76,6 +76,15 @@ export class TreeNotesPlugin extends Plugin {
 			)
 		);
 
+		//this.registerEvent(
+		//	this.app.vault.on('modify', (file: TFile) =>
+		//		this.refreshView((view) => {
+		//			view.cache.updateCacheEntry(file, this.app.metadataCache);
+		//			view.handleModify(file.basename);
+		//		})
+		//	)
+		//);
+
 		this.addRibbonIcon('list-tree', 'Open tree notes view', () =>
 			this.activateView()
 		);
