@@ -9,19 +9,23 @@ export type NoteObj = {
 	count: number;
 	link: TFile | undefined;
 	linkSet: Map<string, NoteObj>;
-}
+};
 
 export const SortOrder = new Map<string, string>([
 	["NUM_DESC", "Number of links (most to least)"],
 	["NUM_ASC", "Number of links (least to most)"],
 	["ALPH_ASC", "Note name (A to Z)"],
 	["ALPH_DESC", "Note name (Z to A)"],
-])
+]);
 
 export class NoteCache {
 	links: Map<string, NoteObj> = new Map();
 
-	createCache(files: TFile[], metadataCache: MetadataCache, includePotential: boolean) {
+	createCache(
+		files: TFile[],
+		metadataCache: MetadataCache,
+		includePotential: boolean,
+	) {
 		for (const file of files) {
 			this.makeEntryFromFile(file, metadataCache);
 		}
@@ -55,10 +59,10 @@ export class NoteCache {
 		const fileCache = metadataCache.getFileCache(file);
 		let fileCacheLinks: (LinkCache | FrontmatterLinkCache)[] = [];
 		if (fileCache && fileCache.links) {
-			fileCacheLinks = [...fileCacheLinks, ...fileCache.links]
+			fileCacheLinks = [...fileCacheLinks, ...fileCache.links];
 		}
 		if (fileCache && fileCache.frontmatterLinks) {
-			fileCacheLinks = [...fileCacheLinks, ...fileCache.frontmatterLinks]
+			fileCacheLinks = [...fileCacheLinks, ...fileCache.frontmatterLinks];
 		}
 
 		// Iterate over all links for this file
@@ -69,7 +73,7 @@ export class NoteCache {
 					currentFile.linkSet.set(link.link, cacheLink);
 				}
 				if (!cacheLink.linkSet.has(file.basename)) {
-					cacheLink.linkSet.set(file.basename, currentFile)
+					cacheLink.linkSet.set(file.basename, currentFile);
 				}
 			}
 		}
@@ -80,7 +84,7 @@ export class NoteCache {
 			this.links.set(name, {
 				count: 0,
 				link: undefined,
-				linkSet: new Map<string, NoteObj>
+				linkSet: new Map<string, NoteObj>(),
 			});
 		}
 		return this.links.get(name);
@@ -116,50 +120,45 @@ export class NoteCache {
 		const newCacheEntry = this.links.get(file.basename);
 		if (newCacheEntry) {
 			for (const [, note] of newCacheEntry.linkSet) {
-				note.linkSet.set(file.basename, newCacheEntry)
+				note.linkSet.set(file.basename, newCacheEntry);
 			}
 		}
 	}
 
 	sort(order: string) {
-		let sortFunc: (a: [string, NoteObj], b: [string, NoteObj]) => number
+		let sortFunc: (a: [string, NoteObj], b: [string, NoteObj]) => number;
 
 		switch (order) {
 			case "NUM_DESC": {
-				sortFunc = (a: [string, NoteObj], b: [string, NoteObj]) => (
+				sortFunc = (a: [string, NoteObj], b: [string, NoteObj]) =>
 					a[1].count != b[1].count
 						? b[1].count - a[1].count
-						: a[0].localeCompare(b[0])
-				)
-				break
+						: a[0].localeCompare(b[0]);
+				break;
 			}
 			case "NUM_ASC": {
-				sortFunc = (a: [string, NoteObj], b: [string, NoteObj]) => (
+				sortFunc = (a: [string, NoteObj], b: [string, NoteObj]) =>
 					a[1].count != b[1].count
 						? a[1].count - b[1].count
-						: a[0].localeCompare(b[0])
-				)
-				break
+						: a[0].localeCompare(b[0]);
+				break;
 			}
 			case "ALPH_ASC": {
-				sortFunc = (a: [string, NoteObj], b: [string, NoteObj]) => (
-					a[0].localeCompare(b[0])
-				)
-				break
+				sortFunc = (a: [string, NoteObj], b: [string, NoteObj]) =>
+					a[0].localeCompare(b[0]);
+				break;
 			}
 			case "ALPH_DESC": {
-				sortFunc = (a: [string, NoteObj], b: [string, NoteObj]) => (
-					b[0].localeCompare(a[0])
-				)
-				break
+				sortFunc = (a: [string, NoteObj], b: [string, NoteObj]) =>
+					b[0].localeCompare(a[0]);
+				break;
 			}
 			default: {
-				sortFunc = (a: [string, NoteObj], b: [string, NoteObj]) => (
+				sortFunc = (a: [string, NoteObj], b: [string, NoteObj]) =>
 					a[1].count != b[1].count
 						? b[1].count - a[1].count
-						: a[0].localeCompare(b[0])
-				)
-				break
+						: a[0].localeCompare(b[0]);
+				break;
 			}
 		}
 
@@ -171,6 +170,6 @@ export class NoteCache {
 	}
 
 	clearCache() {
-		this.links = new Map<string, NoteObj>;
+		this.links = new Map<string, NoteObj>();
 	}
 }

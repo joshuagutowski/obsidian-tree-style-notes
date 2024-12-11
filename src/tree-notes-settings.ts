@@ -1,13 +1,6 @@
-import {
-	App,
-	normalizePath,
-	PluginSettingTab,
-	Setting,
-} from "obsidian";
+import { App, normalizePath, PluginSettingTab, Setting } from "obsidian";
 
-import {
-	TreeNotesPlugin,
-} from "./tree-notes-plugin";
+import { TreeNotesPlugin } from "./tree-notes-plugin";
 
 export interface TreeNotesSettings {
 	rootFolder: string;
@@ -64,18 +57,18 @@ export class TreeNotesSettingsTab extends PluginSettingTab {
 			.addText((text) => {
 				text.inputEl.type = "number";
 				text.inputEl.min = "0";
-				text
-					.setValue(this.plugin.settings.topLevelCutoff.toString())
-					.onChange(async (value) => {
-						const parsedValue = parseInt(value, 10);
-						if (isNaN(parsedValue)) {
-							this.plugin.settings.topLevelCutoff = 4;
-						} else {
-							this.plugin.settings.topLevelCutoff = parsedValue;
-						}
-						await this.plugin.saveSettings();
-						this.plugin.refreshView((view) => view.renderView());
-					});
+				text.setValue(
+					this.plugin.settings.topLevelCutoff.toString(),
+				).onChange(async (value) => {
+					const parsedValue = parseInt(value, 10);
+					if (isNaN(parsedValue)) {
+						this.plugin.settings.topLevelCutoff = 4;
+					} else {
+						this.plugin.settings.topLevelCutoff = parsedValue;
+					}
+					await this.plugin.saveSettings();
+					this.plugin.refreshView((view) => view.renderView());
+				});
 			});
 
 		new Setting(containerEl)
