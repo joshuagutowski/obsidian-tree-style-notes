@@ -81,6 +81,20 @@ export class NoteCache {
 		return this.links.get(name);
 	}
 
+	renameCacheEntry(oldName: string, newName: string) {
+		const note = this.links.get(oldName);
+		if (note) {
+			this.links.set(newName, note);
+			this.links.delete(oldName);
+			for (const [, noteObj] of this.links) {
+				if (noteObj.linkSet.has(oldName)) {
+					noteObj.linkSet.set(newName, note);
+					noteObj.linkSet.delete(oldName);
+				}
+			}
+		}
+	}
+
 	sort(order: string) {
 		let sortFunc: (a: [string, NoteObj], b: [string, NoteObj]) => number
 

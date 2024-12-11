@@ -28,8 +28,8 @@ export class TreeNotesPlugin extends Plugin {
 
 		this.registerEvent(
 			this.app.workspace.on('active-leaf-change', () => {
-				this.refreshView(
-					(view) => view.changeActive(
+				this.refreshView((view) =>
+					view.handleChangeActive(
 						this.app.workspace.getActiveFile()?.basename
 					)
 				);
@@ -38,17 +38,41 @@ export class TreeNotesPlugin extends Plugin {
 
 		this.registerEvent(
 			this.app.vault.on('create', (file: TFile) =>
-				this.refreshView(
-					(view) => view.changeCreated(file.basename)
-				)
+				this.refreshView((view) => {
+					const cacheFile = view.cache.links.get(file.basename);
+					if (cacheFile) {
+						cacheFile.link = file;
+						view.handleCreate(file.basename);
+					}
+				})
 			)
 		);
 
 		this.registerEvent(
 			this.app.vault.on('delete', (file: TFile) =>
-				this.refreshView(
-					(view) => view.changeDeleted(file.basename)
-				)
+				this.refreshView((view) => {
+					const cacheFile = view.cache.links.get(file.basename);
+					if (cacheFile) {
+						cacheFile.link = undefined;
+						view.handleDelete(file.basename);
+					}
+				})
+			)
+		);
+
+		this.registerEvent(
+			this.app.vault.on('rename', (file: TFile, oldPath: string) =>
+				this.refreshView((view) => {
+					const oldBasename = oldPath.substring(
+						oldPath.lastIndexOf('/') + 1,
+						oldPath.length - 3
+					);
+					const cacheFile = view.cache.links.get(oldBasename);
+					if (cacheFile) {
+						view.cache.renameCacheEntry(oldBasename, file.basename)
+						view.handleRename(oldBasename, file.basename);
+					}
+				})
 			)
 		);
 
@@ -86,7 +110,7 @@ export class TreeNotesPlugin extends Plugin {
 		workspace.revealLeaf(leaf);
 	}
 
-	async refreshView(callback: (view: TreeNotesView) => void) {
+	refreshView(callback: (view: TreeNotesView) => void) {
 		for (let leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_TREENOTES)) {
 			let view = leaf.view;
 			if (view instanceof TreeNotesView) {
