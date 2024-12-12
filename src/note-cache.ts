@@ -104,7 +104,11 @@ export class NoteCache {
 		}
 	}
 
-	updateCacheEntry(file: TFile, metadataCache: MetadataCache) {
+	updateCacheEntry(
+		file: TFile,
+		metadataCache: MetadataCache,
+		sortOrder: string,
+	) {
 		const cacheEntry = this.links.get(file.basename);
 		let oldLinks: NoteObj[] = [];
 		if (cacheEntry) {
@@ -128,6 +132,7 @@ export class NoteCache {
 			note.linkSet.set(file.basename, newCacheEntry);
 			note.count = note.linkSet.size;
 		}
+		this.sort(sortOrder);
 	}
 
 	sort(order: string) {

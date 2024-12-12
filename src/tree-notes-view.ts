@@ -244,8 +244,7 @@ export class TreeNotesView extends ItemView {
 		for (const [path, div] of this.divCache) {
 			const nameInPath = path[path.length - 1];
 
-			// temporarily out of if statement
-			// update link number for each element in divCache
+			// update link count for each element in divCache
 			const treeItemNumber = div.querySelector(".tree-item-flair-outer");
 			const note = this.cache.links.get(nameInPath);
 			if (!treeItemNumber || !note) {
@@ -256,9 +255,8 @@ export class TreeNotesView extends ItemView {
 			}
 			treeItemNumber.setText(String(note.count));
 
-			if (nameInPath != noteName) {
-				// rerender div and delete it's children if note.count changed
-			} else if (nameInPath === noteName) {
+			if (nameInPath === noteName || note.linkSet.has(noteName)) {
+				// --- TODO ---
 				// rerender this div, and delete all it's children from divCache
 			}
 		}

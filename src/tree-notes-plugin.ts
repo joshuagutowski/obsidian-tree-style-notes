@@ -44,7 +44,7 @@ export class TreeNotesPlugin extends Plugin {
 		// --- update to refresh links when note is deleted ---
 		// link it to updateCacheEntry?
 		this.registerEvent(
-			this.app.vault.on("delete", (file: TFile) =>
+			this.app.metadataCache.on("deleted", (file: TFile) =>
 				this.refreshView((view) => {
 					const cacheFile = view.cache.links.get(file.basename);
 					if (cacheFile) {
@@ -72,12 +72,15 @@ export class TreeNotesPlugin extends Plugin {
 			),
 		);
 
-		// --- DEBOUNCE THIS EVENT ---
 		// renaming also sends modify event, make sure they don't conflict
 		this.registerEvent(
-			this.app.vault.on("modify", (file: TFile) =>
+			this.app.metadataCache.on("changed", (file: TFile) =>
 				this.refreshView((view) => {
-					view.cache.updateCacheEntry(file, this.app.metadataCache);
+					view.cache.updateCacheEntry(
+						file,
+						this.app.metadataCache,
+						this.settings.sortOrder,
+					);
 					//console.log(view.cache.links.get(file.basename));
 					view.handleModify(file.basename);
 				}),
