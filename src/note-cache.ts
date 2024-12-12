@@ -121,6 +121,7 @@ export class NoteCache {
 		if (newCacheEntry) {
 			for (const [, note] of newCacheEntry.linkSet) {
 				note.linkSet.set(file.basename, newCacheEntry);
+				note.count = note.linkSet.size;
 			}
 		}
 	}

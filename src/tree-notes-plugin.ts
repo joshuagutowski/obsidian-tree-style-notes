@@ -41,12 +41,15 @@ export class TreeNotesPlugin extends Plugin {
 			),
 		);
 
+		// --- update to refresh links when note is deleted ---
+		// link it to updateCacheEntry?
 		this.registerEvent(
 			this.app.vault.on("delete", (file: TFile) =>
 				this.refreshView((view) => {
 					const cacheFile = view.cache.links.get(file.basename);
 					if (cacheFile) {
 						cacheFile.link = undefined;
+						//view.cache.updateCacheEntry(file, this.app.metadataCache);
 						view.handleDelete(file.basename);
 					}
 				}),
@@ -69,14 +72,17 @@ export class TreeNotesPlugin extends Plugin {
 			),
 		);
 
-		//this.registerEvent(
-		//	this.app.vault.on('modify', (file: TFile) =>
-		//		this.refreshView((view) => {
-		//			view.cache.updateCacheEntry(file, this.app.metadataCache);
-		//			view.handleModify(file.basename);
-		//		})
-		//	)
-		//);
+		// --- DEBOUNCE THIS EVENT ---
+		// renaming also sends modify event, make sure they don't conflict
+		this.registerEvent(
+			this.app.vault.on("modify", (file: TFile) =>
+				this.refreshView((view) => {
+					view.cache.updateCacheEntry(file, this.app.metadataCache);
+					//console.log(view.cache.links.get(file.basename));
+					view.handleModify(file.basename);
+				}),
+			),
+		);
 
 		this.addRibbonIcon("list-tree", "Open tree notes view", () =>
 			this.activateView(),
