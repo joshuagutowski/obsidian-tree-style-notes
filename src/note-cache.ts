@@ -118,11 +118,15 @@ export class NoteCache {
 
 		this.makeEntryFromFile(file, metadataCache);
 		const newCacheEntry = this.links.get(file.basename);
-		if (newCacheEntry) {
-			for (const [, note] of newCacheEntry.linkSet) {
-				note.linkSet.set(file.basename, newCacheEntry);
-				note.count = note.linkSet.size;
-			}
+		if (!newCacheEntry) {
+			console.error(
+				`updateCacheEntry Error: problem getting new cache entry for ${file.basename}`,
+			);
+			return;
+		}
+		for (const [, note] of newCacheEntry.linkSet) {
+			note.linkSet.set(file.basename, newCacheEntry);
+			note.count = note.linkSet.size;
 		}
 	}
 
