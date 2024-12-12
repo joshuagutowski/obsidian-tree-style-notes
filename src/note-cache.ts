@@ -51,9 +51,7 @@ export class NoteCache {
 	makeEntryFromFile(file: TFile, metadataCache: MetadataCache) {
 		// Create cache entry for this file
 		const currentFile = this.getCacheEntry(file.basename);
-		if (currentFile) {
-			currentFile.link = file;
-		}
+		currentFile.link = file;
 
 		// Collect all links to iterate over
 		const fileCache = metadataCache.getFileCache(file);
@@ -68,26 +66,27 @@ export class NoteCache {
 		// Iterate over all links for this file
 		for (const link of fileCacheLinks) {
 			const cacheLink = this.getCacheEntry(link.link);
-			if (currentFile && cacheLink) {
-				if (!currentFile.linkSet.has(link.link)) {
-					currentFile.linkSet.set(link.link, cacheLink);
-				}
-				if (!cacheLink.linkSet.has(file.basename)) {
-					cacheLink.linkSet.set(file.basename, currentFile);
-				}
+			if (!currentFile.linkSet.has(link.link)) {
+				currentFile.linkSet.set(link.link, cacheLink);
+			}
+			if (!cacheLink.linkSet.has(file.basename)) {
+				cacheLink.linkSet.set(file.basename, currentFile);
 			}
 		}
 	}
 
-	getCacheEntry(name: string): NoteObj | undefined {
-		if (!this.links.has(name)) {
-			this.links.set(name, {
+	getCacheEntry(name: string): NoteObj {
+		let entry = this.links.get(name);
+
+		if (!entry) {
+			entry = {
 				count: 0,
 				link: undefined,
 				linkSet: new Map<string, NoteObj>(),
-			});
+			};
+			this.links.set(name, entry);
 		}
-		return this.links.get(name);
+		return entry;
 	}
 
 	renameCacheEntry(oldName: string, newName: string) {
@@ -128,6 +127,15 @@ export class NoteCache {
 			);
 			return;
 		}
+
+		for (const note of oldLinks) {
+			if (note.link) {
+				this.makeEntryFromFile(note.link, metadataCache);
+			}
+		}
+
+		newCacheEntry.count = newCacheEntry.linkSet.size;
+
 		for (const [, note] of newCacheEntry.linkSet) {
 			note.linkSet.set(file.basename, newCacheEntry);
 			note.count = note.linkSet.size;

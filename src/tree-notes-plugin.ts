@@ -49,8 +49,13 @@ export class TreeNotesPlugin extends Plugin {
 					const cacheFile = view.cache.links.get(file.basename);
 					if (cacheFile) {
 						cacheFile.link = undefined;
-						//view.cache.updateCacheEntry(file, this.app.metadataCache);
+						view.cache.updateCacheEntry(
+							file,
+							this.app.metadataCache,
+							this.settings.sortOrder,
+						);
 						view.handleDelete(file.basename);
+						view.handleModify(file.basename);
 					}
 				}),
 			),
@@ -81,7 +86,6 @@ export class TreeNotesPlugin extends Plugin {
 						this.app.metadataCache,
 						this.settings.sortOrder,
 					);
-					//console.log(view.cache.links.get(file.basename));
 					view.handleModify(file.basename);
 				}),
 			),
