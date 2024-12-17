@@ -8,9 +8,9 @@ export const VIEW_TYPE_TREENOTES = "tree-notes-view";
 
 export class TreeNotesView extends ItemView {
 	plugin: TreeNotesPlugin;
-	cache: NoteCache = new NoteCache();
 	container: Element;
-	divCache: Map<string[], HTMLDivElement> = new Map();
+	noteCache: NoteCache = new NoteCache();
+	viewCache: Map<string[], HTMLDivElement> = new Map();
 
 	constructor(leaf: WorkspaceLeaf, plugin: TreeNotesPlugin) {
 		super(leaf);
@@ -38,26 +38,26 @@ export class TreeNotesView extends ItemView {
 
 	async onClose() {
 		this.container.empty();
-		this.divCache.clear();
-		this.cache.clearCache();
+		this.viewCache.clear();
+		this.noteCache.clearCache();
 	}
 
 	async renderView() {
 		this.container.empty();
-		this.divCache.clear();
-		this.cache.clearCache();
+		this.viewCache.clear();
+		this.noteCache.clearCache();
 
 		const files = this.app.vault.getMarkdownFiles();
 		const filteredFiles = files.filter((file) => {
 			return file.path.startsWith(this.plugin.settings.rootFolder);
 		});
 
-		this.cache.createCache(
+		this.noteCache.createCache(
 			filteredFiles,
 			this.app.metadataCache,
 			this.plugin.settings.includePotential,
 		);
-		this.cache.sort(this.plugin.settings.sortOrder);
+		this.noteCache.sort(this.plugin.settings.sortOrder);
 
 		this.renderHeader(this.container);
 
@@ -65,18 +65,18 @@ export class TreeNotesView extends ItemView {
 			cls: "nav-files-container node-insert-event",
 		});
 
-		this.renderItems(navFilesContainer, []);
+		this.renderItems(navFilesContainer, [], null);
 	}
 
 	async renderItems(
 		container: HTMLDivElement,
 		path: string[],
-		parentName?: string,
+		parentName: string | null,
 	) {
 		// Create array to iterate through
 		const links = !parentName
-			? this.cache.links
-			: this.cache.links.get(parentName)?.linkSet;
+			? this.noteCache.links
+			: this.noteCache.links.get(parentName)?.linkSet;
 
 		if (!links) {
 			console.error(
@@ -98,11 +98,11 @@ export class TreeNotesView extends ItemView {
 			);
 
 			let treeItem =
-				this.divCache.get(currentPath) ??
+				this.viewCache.get(currentPath) ??
 				container.createDiv({
 					cls: "tree-item nav-folder is-collapsed",
 				});
-			this.divCache.set(currentPath, treeItem);
+			this.viewCache.set(currentPath, treeItem);
 
 			const treeItemLabel = this.createTreeItemLabel(
 				treeItem,
@@ -126,140 +126,30 @@ export class TreeNotesView extends ItemView {
 			treeItemLabel.addEventListener("click", async (event) => {
 				if (event.ctrlKey || event.metaKey) {
 					this.handleNoteOpen(name, note);
-				} else {
-					isCollapsed = !isCollapsed;
-					treeItem.toggleClass("is-collapsed", isCollapsed);
-					treeItemLabel
-						.querySelector(".collapse-icon")
-						?.toggleClass("is-collapsed", isCollapsed);
+					return;
+				}
 
-					if (!isCollapsed) {
-						if (childContainer) {
-							childContainer.show();
-						} else {
-							childContainer = treeItem.createDiv({
-								cls: "tree-item-children nav-folder-children",
-							});
-							this.renderItems(childContainer, currentPath, name);
-						}
-					} else if (childContainer) {
-						childContainer.hide();
-					}
+				isCollapsed = !isCollapsed;
+
+				treeItem.toggleClass("is-collapsed", isCollapsed);
+				treeItemLabel
+					.querySelector(".collapse-icon")
+					?.toggleClass("is-collapsed", isCollapsed);
+
+				if (!isCollapsed && childContainer) {
+					childContainer.show();
+				} else if (!isCollapsed) {
+					childContainer = treeItem.createDiv({
+						cls: "tree-item-children nav-folder-children",
+					});
+					this.renderItems(childContainer, currentPath, name);
+				} else if (childContainer) {
+					childContainer.hide();
 				}
 			});
 		}
 
 		this.handleChangeActive(this.app.workspace.getActiveFile()?.basename);
-	}
-
-	async handleNoteOpen(name: string, note: NoteObj) {
-		if (!note.link) {
-			try {
-				const newNote = await this.app.vault.create(`${name}.md`, "");
-				note.link = newNote;
-			} catch (error) {
-				console.log(
-					`handleNoteOpen Error: couldn't create note ${name}`,
-				);
-				return;
-			}
-		}
-		this.app.workspace.getLeaf(false).openFile(note.link);
-	}
-
-	handleChangeActive(noteName: string | undefined) {
-		for (const [path, div] of this.divCache) {
-			const treeItemLabel = div.querySelector(".tree-item-self");
-			if (!treeItemLabel) {
-				console.error(
-					`handleChangeActive Error: div .tree-item-self does not exist for ${noteName}`,
-				);
-				continue;
-			}
-
-			treeItemLabel.removeClass("is-active");
-
-			const nameInPath = path[path.length - 1];
-			if (nameInPath === noteName) {
-				treeItemLabel.addClass("is-active");
-			}
-		}
-	}
-
-	handleCreate(noteName: string) {
-		for (const [path, div] of this.divCache) {
-			const nameInPath = path[path.length - 1];
-			if (nameInPath === noteName) {
-				const treeItemName = div.querySelector(".tree-item-inner");
-				if (!treeItemName) {
-					console.error(
-						`handleCreate Error: div .tree-item-inner does not exist for ${noteName}`,
-					);
-					continue;
-				}
-				treeItemName.removeClass("potential-note");
-			}
-		}
-	}
-
-	handleDelete(noteName: string) {
-		for (const [path, div] of this.divCache) {
-			const nameInPath = path[path.length - 1];
-			if (nameInPath === noteName) {
-				const treeItemName = div.querySelector(".tree-item-inner");
-				if (!treeItemName) {
-					console.error(
-						`handleDelete Error: div .tree-item-inner does not exist for ${noteName}`,
-					);
-					continue;
-				}
-				treeItemName.addClass("potential-note");
-			}
-		}
-	}
-
-	handleRename(oldName: string, newName: string) {
-		for (const [path, div] of this.divCache) {
-			const nameInPath = path[path.length - 1];
-			if (nameInPath === oldName) {
-				const treeItemName = div.querySelector(".tree-item-inner");
-				if (!treeItemName) {
-					console.error(
-						`handleRename Error: div .tree-item-inner does not exist for ${oldName}`,
-					);
-					continue;
-				}
-				treeItemName.setText(newName);
-			}
-
-			// replace the name in any path which contains it
-			const nameIndex = path.indexOf(oldName);
-			if (nameIndex != -1) {
-				path[nameIndex] = newName;
-			}
-		}
-	}
-
-	handleModify(noteName: string) {
-		for (const [path, div] of this.divCache) {
-			const nameInPath = path[path.length - 1];
-
-			// update link count for each element in divCache
-			const treeItemNumber = div.querySelector(".tree-item-flair-outer");
-			const note = this.cache.links.get(nameInPath);
-			if (!treeItemNumber || !note) {
-				console.error(
-					`handleModify Error: couldn't update count for ${nameInPath}`,
-				);
-				continue;
-			}
-			treeItemNumber.setText(String(note.count));
-
-			if (nameInPath === noteName || note.linkSet.has(noteName)) {
-				// --- TODO ---
-				// rerender this div, and delete all it's children from divCache
-			}
-		}
 	}
 
 	createTreeItemLabel(
@@ -294,6 +184,119 @@ export class TreeNotesView extends ItemView {
 		linkCount.setText(String(note.count));
 
 		return treeItemSelf;
+	}
+
+	async handleNoteOpen(name: string, note: NoteObj) {
+		if (!note.link) {
+			try {
+				const newNote = await this.app.vault.create(`${name}.md`, "");
+				note.link = newNote;
+			} catch (error) {
+				console.log(
+					`handleNoteOpen Error: couldn't create note ${name}`,
+				);
+				return;
+			}
+		}
+		this.app.workspace.getLeaf(false).openFile(note.link);
+	}
+
+	handleChangeActive(noteName: string | undefined) {
+		for (const [path, div] of this.viewCache) {
+			const treeItemLabel = div.querySelector(".tree-item-self");
+			if (!treeItemLabel) {
+				console.error(
+					`handleChangeActive Error: div .tree-item-self does not exist for ${noteName}`,
+				);
+				continue;
+			}
+
+			treeItemLabel.removeClass("is-active");
+
+			const nameInPath = path[path.length - 1];
+			if (nameInPath === noteName) {
+				treeItemLabel.addClass("is-active");
+			}
+		}
+	}
+
+	handleCreate(noteName: string) {
+		for (const [path, div] of this.viewCache) {
+			const nameInPath = path[path.length - 1];
+			if (nameInPath === noteName) {
+				const treeItemName = div.querySelector(".tree-item-inner");
+				if (!treeItemName) {
+					console.error(
+						`handleCreate Error: div .tree-item-inner does not exist for ${noteName}`,
+					);
+					continue;
+				}
+				treeItemName.removeClass("potential-note");
+			}
+		}
+	}
+
+	handleDelete(noteName: string) {
+		for (const [path, div] of this.viewCache) {
+			const nameInPath = path[path.length - 1];
+			if (nameInPath === noteName) {
+				const treeItemName = div.querySelector(".tree-item-inner");
+				if (!treeItemName) {
+					console.error(
+						`handleDelete Error: div .tree-item-inner does not exist for ${noteName}`,
+					);
+					continue;
+				}
+				treeItemName.addClass("potential-note");
+			}
+		}
+	}
+
+	handleRename(oldName: string, newName: string) {
+		for (const [path, div] of this.viewCache) {
+			const nameInPath = path[path.length - 1];
+			if (nameInPath === oldName) {
+				const treeItemName = div.querySelector(".tree-item-inner");
+				if (!treeItemName) {
+					console.error(
+						`handleRename Error: div .tree-item-inner does not exist for ${oldName}`,
+					);
+					continue;
+				}
+				treeItemName.setText(newName);
+			}
+
+			// replace the name in any path which contains it
+			const nameIndex = path.indexOf(oldName);
+			if (nameIndex != -1) {
+				path[nameIndex] = newName;
+			}
+		}
+	}
+
+	// --- Create a proper div cache to handle updating and sorting more gracefully ---
+	// isCollapsed and childContainer as part of cache element to make accesible
+	// can use path as name, but children should be in parent object, rather than all together in the same map
+	handleModify(noteName: string) {
+		for (const [path, div] of this.viewCache) {
+			const nameInPath = path[path.length - 1];
+
+			// update link count for each element in viewCache
+			const treeItemNumber = div.querySelector(".tree-item-flair-outer");
+			const note = this.noteCache.links.get(nameInPath);
+			if (!treeItemNumber || !note) {
+				console.error(
+					`handleModify Error: couldn't update count for ${nameInPath}`,
+				);
+				continue;
+			}
+			treeItemNumber.setText(String(note.count));
+
+			if (nameInPath === noteName || note.linkSet.has(noteName)) {
+				// --- TODO ---
+				// rerender this div, and delete all it's children from viewCache
+			}
+		}
 	}
 
 	async renderHeader(container: Element) {
@@ -400,7 +403,7 @@ export class TreeNotesView extends ItemView {
 
 	collapseAll() {
 		this.container.empty();
-		this.divCache.clear();
+		this.viewCache.clear();
 
 		this.renderHeader(this.container);
 
@@ -408,7 +411,7 @@ export class TreeNotesView extends ItemView {
 			cls: "nav-files-container node-insert-event",
 		});
 
-		this.renderItems(navFilesContainer, []);
+		this.renderItems(navFilesContainer, [], null);
 
 		this.handleChangeActive(this.app.workspace.getActiveFile()?.basename);
 	}

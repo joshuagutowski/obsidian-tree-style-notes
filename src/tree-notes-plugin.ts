@@ -32,7 +32,7 @@ export class TreeNotesPlugin extends Plugin {
 		this.registerEvent(
 			this.app.vault.on("create", (file: TFile) =>
 				this.refreshView((view) => {
-					const cacheFile = view.cache.links.get(file.basename);
+					const cacheFile = view.noteCache.links.get(file.basename);
 					if (cacheFile) {
 						cacheFile.link = file;
 						view.handleCreate(file.basename);
@@ -46,10 +46,10 @@ export class TreeNotesPlugin extends Plugin {
 		this.registerEvent(
 			this.app.metadataCache.on("deleted", (file: TFile) =>
 				this.refreshView((view) => {
-					const cacheFile = view.cache.links.get(file.basename);
+					const cacheFile = view.noteCache.links.get(file.basename);
 					if (cacheFile) {
 						cacheFile.link = undefined;
-						view.cache.updateCacheEntry(
+						view.noteCache.updateCacheEntry(
 							file,
 							this.app.metadataCache,
 							this.settings.sortOrder,
@@ -68,9 +68,12 @@ export class TreeNotesPlugin extends Plugin {
 						oldPath.lastIndexOf("/") + 1,
 						oldPath.length - 3,
 					);
-					const cacheFile = view.cache.links.get(oldBasename);
+					const cacheFile = view.noteCache.links.get(oldBasename);
 					if (cacheFile) {
-						view.cache.renameCacheEntry(oldBasename, file.basename);
+						view.noteCache.renameCacheEntry(
+							oldBasename,
+							file.basename,
+						);
 						view.handleRename(oldBasename, file.basename);
 					}
 				}),
@@ -81,7 +84,7 @@ export class TreeNotesPlugin extends Plugin {
 		this.registerEvent(
 			this.app.metadataCache.on("changed", (file: TFile) =>
 				this.refreshView((view) => {
-					view.cache.updateCacheEntry(
+					view.noteCache.updateCacheEntry(
 						file,
 						this.app.metadataCache,
 						this.settings.sortOrder,
