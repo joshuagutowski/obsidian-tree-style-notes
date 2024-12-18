@@ -118,19 +118,19 @@ export class TreeNotesView extends ItemView {
 			});
 		this.viewCache.set(path, treeItem);
 
-		const treeItemSelf = treeItem.createDiv({
+		const treeItemLabel = treeItem.createDiv({
 			cls: "tree-item-self nav-folder-title is-clickable mod-collapsible",
 		});
 
 		let collapseIcon: HTMLDivElement | null = null;
 		if (!isBase) {
-			collapseIcon = treeItemSelf.createDiv({
+			collapseIcon = treeItemLabel.createDiv({
 				cls: "tree-item-icon collapse-icon is-collapsed",
 			});
 			setIcon(collapseIcon, "right-triangle");
 		}
 
-		const noteName = treeItemSelf.createDiv({
+		const noteName = treeItemLabel.createDiv({
 			cls: "tree-item-inner nav-folder-title-content",
 		});
 		noteName.setText(name);
@@ -139,14 +139,14 @@ export class TreeNotesView extends ItemView {
 			noteName.addClass("potential-note");
 		}
 
-		const linkCount = treeItemSelf.createDiv({
+		const linkCount = treeItemLabel.createDiv({
 			cls: "tree-item-flair-outer tree-item-flair",
 		});
 		linkCount.setText(String(note.count));
 
 		// if note has no children, add a listner to open the note, skip the rest
 		if (isBase) {
-			treeItemSelf.addEventListener("click", async () => {
+			treeItemLabel.addEventListener("click", async () => {
 				this.handleNoteOpen(name, note);
 			});
 			return;
@@ -157,7 +157,7 @@ export class TreeNotesView extends ItemView {
 		let childContainer: HTMLDivElement | null = null;
 
 		// click event handling
-		treeItemSelf.addEventListener("click", async (event) => {
+		treeItemLabel.addEventListener("click", async (event) => {
 			if (event.ctrlKey || event.metaKey) {
 				this.handleNoteOpen(name, note);
 				return;
