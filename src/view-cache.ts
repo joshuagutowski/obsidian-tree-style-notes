@@ -1,25 +1,53 @@
 import { NoteObj } from "./note-cache";
 
 export type ViewObj = {
-	div: HTMLDivElement;
 	note: NoteObj;
-	isCollapsed: boolean;
+	treeItem: HTMLDivElement;
 	treeItemLabel: HTMLDivElement;
 	treeItemName: HTMLDivElement;
 	treeItemNumber: HTMLDivElement;
+	isCollapsed: boolean;
 	childContainer: HTMLDivElement | null;
 	children: ViewObj[]; //get passed by reference anyway, but how do I get their names?
 };
 
 export class ViewCache {
-	divs: Map<string[], ViewObj> = new Map();
+	divs: Map<string[], ViewObj>;
 	container: Element;
 
 	constructor(container: Element) {
 		this.container = container;
+		this.divs = new Map();
 	}
 
-	sortView() {
+	clear() {
+		this.container.empty();
+		this.divs.clear();
+	}
+
+	new(
+		path: string[],
+		note: NoteObj,
+		treeItem: HTMLDivElement,
+		treeItemLabel: HTMLDivElement,
+		treeItemName: HTMLDivElement,
+		treeItemNumber: HTMLDivElement,
+	): ViewObj {
+		const newTreeItem: ViewObj = {
+			note: note,
+			treeItem: treeItem,
+			treeItemLabel: treeItemLabel,
+			treeItemName: treeItemName,
+			treeItemNumber: treeItemNumber,
+			isCollapsed: false,
+			childContainer: null,
+			children: [],
+		};
+		this.divs.set(path, newTreeItem);
+		return newTreeItem;
+	}
+
+	sort() {
 		this.container.empty();
 		// sorts the whole container
 	}
@@ -76,7 +104,7 @@ export class ViewCache {
 			const nameInPath = path[path.length - 1];
 
 			// update link count for each element in viewCache
-			const note = this.noteCache.links.get(nameInPath);
+			const note = this.noteCache.notes.get(nameInPath);
 			if (!note) {
 				console.error(
 					`handleModify Error: couldn't update count for ${nameInPath}`,

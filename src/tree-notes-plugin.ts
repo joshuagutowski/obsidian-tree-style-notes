@@ -22,7 +22,7 @@ export class TreeNotesPlugin extends Plugin {
 		this.registerEvent(
 			this.app.workspace.on("active-leaf-change", () => {
 				this.refreshView((view) =>
-					view.handleChangeActive(
+					view.viewCache.changeActive(
 						this.app.workspace.getActiveFile()?.basename,
 					),
 				);
@@ -32,10 +32,10 @@ export class TreeNotesPlugin extends Plugin {
 		this.registerEvent(
 			this.app.vault.on("create", (file: TFile) =>
 				this.refreshView((view) => {
-					const cacheFile = view.noteCache.links.get(file.basename);
+					const cacheFile = view.noteCache.notes.get(file.basename);
 					if (cacheFile) {
 						cacheFile.link = file;
-						view.handleCreate(file.basename);
+						view.viewCache.handleCreate(file.basename);
 					}
 				}),
 			),
@@ -46,16 +46,16 @@ export class TreeNotesPlugin extends Plugin {
 		this.registerEvent(
 			this.app.metadataCache.on("deleted", (file: TFile) =>
 				this.refreshView((view) => {
-					const cacheFile = view.noteCache.links.get(file.basename);
+					const cacheFile = view.noteCache.notes.get(file.basename);
 					if (cacheFile) {
 						cacheFile.link = undefined;
-						view.noteCache.updateCacheEntry(
+						view.noteCache.updateEntry(
 							file,
 							this.app.metadataCache,
 							this.settings.sortOrder,
 						);
-						view.handleDelete(file.basename);
-						view.handleModify(file.basename);
+						view.viewCache.handleDelete(file.basename);
+						view.viewCache.handleModify(file.basename);
 					}
 				}),
 			),
@@ -68,13 +68,10 @@ export class TreeNotesPlugin extends Plugin {
 						oldPath.lastIndexOf("/") + 1,
 						oldPath.length - 3,
 					);
-					const cacheFile = view.noteCache.links.get(oldBasename);
+					const cacheFile = view.noteCache.notes.get(oldBasename);
 					if (cacheFile) {
-						view.noteCache.renameCacheEntry(
-							oldBasename,
-							file.basename,
-						);
-						view.handleRename(oldBasename, file.basename);
+						view.noteCache.renameEntry(oldBasename, file.basename);
+						view.viewCache.handleRename(oldBasename, file.basename);
 					}
 				}),
 			),
@@ -84,12 +81,12 @@ export class TreeNotesPlugin extends Plugin {
 		this.registerEvent(
 			this.app.metadataCache.on("changed", (file: TFile) =>
 				this.refreshView((view) => {
-					view.noteCache.updateCacheEntry(
+					view.noteCache.updateEntry(
 						file,
 						this.app.metadataCache,
 						this.settings.sortOrder,
 					);
-					view.handleModify(file.basename);
+					view.viewCache.handleModify(file.basename);
 				}),
 			),
 		);
