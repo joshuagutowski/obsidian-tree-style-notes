@@ -104,46 +104,6 @@ export class NoteCache {
 		}
 	}
 
-	updateCacheEntry(
-		file: TFile,
-		metadataCache: MetadataCache,
-		sortOrder: string,
-	) {
-		const cacheEntry = this.links.get(file.basename);
-		let oldLinks: NoteObj[] = [];
-		if (cacheEntry) {
-			oldLinks = Array.from(cacheEntry.linkSet.values());
-			cacheEntry.linkSet.clear();
-			for (const note of oldLinks) {
-				note.linkSet.delete(file.basename);
-				note.count = note.linkSet.size;
-			}
-		}
-
-		this.makeEntryFromFile(file, metadataCache);
-		const newCacheEntry = this.links.get(file.basename);
-		if (!newCacheEntry) {
-			console.error(
-				`updateCacheEntry Error: problem getting new cache entry for ${file.basename}`,
-			);
-			return;
-		}
-
-		for (const note of oldLinks) {
-			if (note.link) {
-				this.makeEntryFromFile(note.link, metadataCache);
-			}
-		}
-
-		newCacheEntry.count = newCacheEntry.linkSet.size;
-
-		for (const [, note] of newCacheEntry.linkSet) {
-			note.linkSet.set(file.basename, newCacheEntry);
-			note.count = note.linkSet.size;
-		}
-		this.sort(sortOrder);
-	}
-
 	sort(order: string) {
 		let sortFunc: (a: [string, NoteObj], b: [string, NoteObj]) => number;
 

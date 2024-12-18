@@ -269,31 +269,6 @@ export class TreeNotesView extends ItemView {
 		}
 	}
 
-	// --- Create a proper div cache to handle updating and sorting more gracefully ---
-	// isCollapsed and childContainer as part of cache element to make accesible
-	// can use path as name, but children should be in parent object, rather than all together in the same map
-	handleModify(noteName: string) {
-		for (const [path, div] of this.viewCache) {
-			const nameInPath = path[path.length - 1];
-
-			// update link count for each element in viewCache
-			const treeItemNumber = div.querySelector(".tree-item-flair-outer");
-			const note = this.noteCache.links.get(nameInPath);
-			if (!treeItemNumber || !note) {
-				console.error(
-					`handleModify Error: couldn't update count for ${nameInPath}`,
-				);
-				continue;
-			}
-			treeItemNumber.setText(String(note.count));
-
-			if (nameInPath === noteName || note.linkSet.has(noteName)) {
-				// --- TODO ---
-				// rerender this div, and delete all it's children from viewCache
-			}
-		}
-	}
-
 	async renderHeader(container: Element) {
 		const navHeader = container.createDiv({
 			cls: "nav-header",

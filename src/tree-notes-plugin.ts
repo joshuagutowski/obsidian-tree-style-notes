@@ -41,21 +41,13 @@ export class TreeNotesPlugin extends Plugin {
 			),
 		);
 
-		// --- update to refresh links when note is deleted ---
-		// link it to updateCacheEntry?
 		this.registerEvent(
 			this.app.metadataCache.on("deleted", (file: TFile) =>
 				this.refreshView((view) => {
 					const cacheFile = view.noteCache.links.get(file.basename);
 					if (cacheFile) {
 						cacheFile.link = undefined;
-						view.noteCache.updateCacheEntry(
-							file,
-							this.app.metadataCache,
-							this.settings.sortOrder,
-						);
 						view.handleDelete(file.basename);
-						view.handleModify(file.basename);
 					}
 				}),
 			),
@@ -76,20 +68,6 @@ export class TreeNotesPlugin extends Plugin {
 						);
 						view.handleRename(oldBasename, file.basename);
 					}
-				}),
-			),
-		);
-
-		// renaming also sends modify event, make sure they don't conflict
-		this.registerEvent(
-			this.app.metadataCache.on("changed", (file: TFile) =>
-				this.refreshView((view) => {
-					view.noteCache.updateCacheEntry(
-						file,
-						this.app.metadataCache,
-						this.settings.sortOrder,
-					);
-					view.handleModify(file.basename);
 				}),
 			),
 		);
