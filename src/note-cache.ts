@@ -19,7 +19,7 @@ export const SortOrder = new Map<string, string>([
 ]);
 
 export class NoteCache {
-	links: Map<string, NoteObj> = new Map();
+	notes: Map<string, NoteObj> = new Map();
 
 	createCache(
 		files: TFile[],
@@ -31,11 +31,11 @@ export class NoteCache {
 			this.makeEntry(file, metadataCache);
 		}
 
-		for (const [name, note] of this.links) {
+		for (const [name, note] of this.notes) {
 			// if !includePotential remove potenial notes from cache
 			if (!includePotential) {
 				if (!note.link) {
-					this.links.delete(name);
+					this.notes.delete(name);
 					continue;
 				}
 				for (const [childName, childFile] of note.linkSet) {
@@ -77,7 +77,7 @@ export class NoteCache {
 	}
 
 	getEntry(name: string): NoteObj {
-		let entry = this.links.get(name);
+		let entry = this.notes.get(name);
 
 		if (!entry) {
 			entry = {
@@ -85,17 +85,17 @@ export class NoteCache {
 				link: undefined,
 				linkSet: new Map<string, NoteObj>(),
 			};
-			this.links.set(name, entry);
+			this.notes.set(name, entry);
 		}
 		return entry;
 	}
 
 	renameEntry(oldName: string, newName: string) {
-		const note = this.links.get(oldName);
+		const note = this.notes.get(oldName);
 		if (note) {
-			this.links.set(newName, note);
-			this.links.delete(oldName);
-			for (const [, noteObj] of this.links) {
+			this.notes.set(newName, note);
+			this.notes.delete(oldName);
+			for (const [, noteObj] of this.notes) {
 				if (noteObj.linkSet.has(oldName)) {
 					noteObj.linkSet.set(newName, note);
 					noteObj.linkSet.delete(oldName);
@@ -105,7 +105,7 @@ export class NoteCache {
 	}
 
 	updateEntry(file: TFile, metadataCache: MetadataCache, sortOrder: string) {
-		const cacheEntry = this.links.get(file.basename);
+		const cacheEntry = this.notes.get(file.basename);
 		let oldLinks: NoteObj[] = [];
 		if (cacheEntry) {
 			oldLinks = Array.from(cacheEntry.linkSet.values());
@@ -117,7 +117,7 @@ export class NoteCache {
 		}
 
 		this.makeEntry(file, metadataCache);
-		const newCacheEntry = this.links.get(file.basename);
+		const newCacheEntry = this.notes.get(file.basename);
 		if (!newCacheEntry) {
 			console.error(
 				`updateCacheEntry Error: problem getting new cache entry for ${file.basename}`,
@@ -177,14 +177,14 @@ export class NoteCache {
 			}
 		}
 
-		this.links = new Map([...this.links.entries()].sort(sortFunc));
+		this.notes = new Map([...this.notes.entries()].sort(sortFunc));
 
-		for (const [, note] of this.links) {
+		for (const [, note] of this.notes) {
 			note.linkSet = new Map([...note.linkSet.entries()].sort(sortFunc));
 		}
 	}
 
 	clear() {
-		this.links.clear();
+		this.notes.clear();
 	}
 }
