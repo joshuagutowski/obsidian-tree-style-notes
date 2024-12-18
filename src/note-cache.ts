@@ -28,7 +28,7 @@ export class NoteCache {
 	) {
 		// build initial cache
 		for (const file of files) {
-			this.makeEntryFromFile(file, metadataCache);
+			this.makeEntry(file, metadataCache);
 		}
 
 		for (const [name, note] of this.links) {
@@ -49,9 +49,9 @@ export class NoteCache {
 		}
 	}
 
-	makeEntryFromFile(file: TFile, metadataCache: MetadataCache) {
+	makeEntry(file: TFile, metadataCache: MetadataCache) {
 		// create cache entry for this file
-		const currentFile = this.getCacheEntry(file.basename);
+		const currentFile = this.getEntry(file.basename);
 		currentFile.link = file;
 
 		// collect all links to iterate over
@@ -66,7 +66,7 @@ export class NoteCache {
 
 		// iterate over all links for this file
 		for (const link of fileCacheLinks) {
-			const cacheLink = this.getCacheEntry(link.link);
+			const cacheLink = this.getEntry(link.link);
 			if (!currentFile.linkSet.has(link.link)) {
 				currentFile.linkSet.set(link.link, cacheLink);
 			}
@@ -76,7 +76,7 @@ export class NoteCache {
 		}
 	}
 
-	getCacheEntry(name: string): NoteObj {
+	getEntry(name: string): NoteObj {
 		let entry = this.links.get(name);
 
 		if (!entry) {
@@ -90,7 +90,7 @@ export class NoteCache {
 		return entry;
 	}
 
-	renameCacheEntry(oldName: string, newName: string) {
+	renameEntry(oldName: string, newName: string) {
 		const note = this.links.get(oldName);
 		if (note) {
 			this.links.set(newName, note);
@@ -104,11 +104,7 @@ export class NoteCache {
 		}
 	}
 
-	updateCacheEntry(
-		file: TFile,
-		metadataCache: MetadataCache,
-		sortOrder: string,
-	) {
+	updateEntry(file: TFile, metadataCache: MetadataCache, sortOrder: string) {
 		const cacheEntry = this.links.get(file.basename);
 		let oldLinks: NoteObj[] = [];
 		if (cacheEntry) {
@@ -120,7 +116,7 @@ export class NoteCache {
 			}
 		}
 
-		this.makeEntryFromFile(file, metadataCache);
+		this.makeEntry(file, metadataCache);
 		const newCacheEntry = this.links.get(file.basename);
 		if (!newCacheEntry) {
 			console.error(
@@ -131,7 +127,7 @@ export class NoteCache {
 
 		for (const note of oldLinks) {
 			if (note.link) {
-				this.makeEntryFromFile(note.link, metadataCache);
+				this.makeEntry(note.link, metadataCache);
 			}
 		}
 
@@ -188,7 +184,7 @@ export class NoteCache {
 		}
 	}
 
-	clearCache() {
-		this.links = new Map<string, NoteObj>();
+	clear() {
+		this.links.clear();
 	}
 }
