@@ -22,7 +22,7 @@ export class TreeNotesView extends ItemView {
 		this.container.addClass("workspace-leaf");
 
 		this.noteCache = new NoteCache();
-		this.viewCache = new ViewCache(this.container);
+		this.viewCache = new ViewCache();
 	}
 
 	getViewType(): string {
@@ -44,10 +44,11 @@ export class TreeNotesView extends ItemView {
 	async onClose() {
 		this.viewCache.clear();
 		this.noteCache.clear();
+		this.container.empty();
 	}
 
 	async renderView(buildNoteCache: boolean) {
-		this.viewCache.clear();
+		this.container.empty();
 
 		if (buildNoteCache) {
 			this.noteCache.clear();
@@ -68,16 +69,18 @@ export class TreeNotesView extends ItemView {
 
 		this.renderHeader();
 
-		const navFilesContainer = this.container.createDiv({
+		const notesContainer = this.container.createDiv({
 			cls: "nav-files-container node-insert-event",
 		});
 
-		this.renderItems(navFilesContainer, [], null);
+		this.viewCache.notesContainer = notesContainer;
+
+		this.renderItems([], notesContainer, null);
 	}
 
 	renderItems(
-		container: HTMLDivElement,
 		path: string[],
+		parentContainer: HTMLDivElement,
 		parentName: string | null,
 	) {
 		// create map to iterate through
@@ -105,7 +108,8 @@ export class TreeNotesView extends ItemView {
 				path.includes(key),
 			);
 
-			this.renderItem(container, name, note, notePath, isBase);
+			const newItem = this.createItem(name, note, notePath, isBase);
+			parentContainer.appendChild(newItem.treeItem);
 		}
 
 		this.viewCache.changeActive(
@@ -113,19 +117,14 @@ export class TreeNotesView extends ItemView {
 		);
 	}
 
-	renderItem(
-		container: HTMLDivElement,
+	createItem(
 		name: string,
 		note: NoteObj,
 		path: string[],
 		isBase: boolean,
-	) {
-		let treeItem =
-			this.viewCache.divs.get(path)?.treeItem ??
-			container.createDiv({
-				cls: "tree-item nav-folder is-collapsed",
-			});
-		//this.viewCache.divs.set(path, treeItem);
+	): ViewObj {
+		const treeItem = document.createElement("div");
+		treeItem.className = "tree-item nav-folder is-collapsed";
 
 		const treeItemLabel = treeItem.createDiv({
 			cls: "tree-item-self nav-folder-title is-clickable mod-collapsible",
@@ -153,55 +152,62 @@ export class TreeNotesView extends ItemView {
 		});
 		treeItemNumber.setText(String(note.count));
 
-		const viewObj = this.viewCache.new(
-			path,
-			note,
-			treeItem,
-			treeItemLabel,
-			treeItemName,
-			treeItemNumber,
-		);
+		const newTreeItem: ViewObj = {
+			note: note,
+			treeItem: treeItem,
+			treeItemLabel: treeItemLabel,
+			treeItemName: treeItemName,
+			treeItemNumber: treeItemNumber,
+			isCollapsed: true,
+			childContainer: null,
+		};
 
-		// if note has no children, add a listner to open the note, skip the rest
-		// FIGURE OUT BETTER WAY OF HANDLING THIS
+		this.viewCache.treeItems.set(path, newTreeItem);
+
+		this.setupEventListeners(newTreeItem, name, path, collapseIcon, isBase);
+
+		return newTreeItem;
+	}
+
+	private setupEventListeners(
+		treeItem: ViewObj,
+		name: string,
+		path: string[],
+		collapseIcon: HTMLDivElement | null,
+		isBase: boolean,
+	) {
 		if (isBase) {
-			treeItemLabel.addEventListener("click", async () => {
-				this.handleNoteOpen(name, note);
+			treeItem.treeItemLabel.addEventListener("click", async () => {
+				this.handleNoteOpen(name, treeItem.note);
 			});
 			return;
 		}
 
-		// add these to the viewObj
-		let isCollapsed = true;
-		let childContainer: HTMLDivElement | null = null;
-
-		// click event handling
-		treeItemLabel.addEventListener("click", async (event) => {
+		treeItem.treeItemLabel.addEventListener("click", async (event) => {
 			if (event.ctrlKey || event.metaKey) {
-				this.handleNoteOpen(name, note);
+				this.handleNoteOpen(name, treeItem.note);
 				return;
 			}
 
-			isCollapsed = !isCollapsed;
+			treeItem.isCollapsed = !treeItem.isCollapsed;
 
-			treeItem.toggleClass("is-collapsed", isCollapsed);
-			collapseIcon?.toggleClass("is-collapsed", isCollapsed);
+			treeItem.treeItem.toggleClass("is-collapsed", treeItem.isCollapsed);
+			collapseIcon?.toggleClass("is-collapsed", treeItem.isCollapsed);
 
-			if (!isCollapsed && childContainer) {
-				childContainer.show();
-			} else if (!isCollapsed) {
-				// how do I get this to view-cache
-				childContainer = treeItem.createDiv({
+			if (!treeItem.isCollapsed && treeItem.childContainer) {
+				treeItem.childContainer.show();
+			} else if (!treeItem.isCollapsed) {
+				treeItem.childContainer = treeItem.treeItem.createDiv({
 					cls: "tree-item-children nav-folder-children",
 				});
-				this.renderItems(childContainer, path, name);
-			} else if (childContainer) {
-				childContainer.hide();
+				this.renderItems(path, treeItem.childContainer, name);
+			} else if (treeItem.childContainer) {
+				treeItem.childContainer.hide();
 			}
 		});
 	}
 
-	async handleNoteOpen(name: string, note: NoteObj) {
+	private async handleNoteOpen(name: string, note: NoteObj) {
 		if (!note.link) {
 			try {
 				const newNote = await this.app.vault.create(`${name}.md`, "");
@@ -216,7 +222,7 @@ export class TreeNotesView extends ItemView {
 		this.app.workspace.getLeaf(false).openFile(note.link);
 	}
 
-	async renderHeader() {
+	private async renderHeader() {
 		const navHeader = this.container.createDiv({
 			cls: "nav-header",
 		});
@@ -272,7 +278,7 @@ export class TreeNotesView extends ItemView {
 		});
 	}
 
-	async createNewUntitledNote() {
+	private async createNewUntitledNote() {
 		const basename = "Untitled";
 		const existingNames = new Set<string>();
 		this.app.vault.getFiles().forEach((file) => {
@@ -299,7 +305,7 @@ export class TreeNotesView extends ItemView {
 		}
 	}
 
-	changeSortOrder(event: MouseEvent) {
+	private changeSortOrder(event: MouseEvent) {
 		const sortMenu = new Menu();
 		for (const [order, title] of SortOrder) {
 			sortMenu.addItem((item) => {
@@ -318,7 +324,7 @@ export class TreeNotesView extends ItemView {
 		sortMenu.showAtMouseEvent(event);
 	}
 
-	collapseAll() {
+	private collapseAll() {
 		this.renderView(false);
 	}
 }
