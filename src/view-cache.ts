@@ -1,26 +1,25 @@
 import { NoteObj } from "./note-cache";
 
 export type ViewObj = {
+	name: string;
 	note: NoteObj;
 	treeItem: HTMLDivElement;
 	treeItemLabel: HTMLDivElement;
 	treeItemName: HTMLDivElement;
 	treeItemNumber: HTMLDivElement;
 	isCollapsed: boolean;
-	childContainer: HTMLDivElement | null;
-	//children: ViewObj[]; //get passed by reference anyway, but how do I get their names?
+	childContainer: HTMLDivElement;
+	//children: Map<string, ViewObj>;
 };
 
 export class ViewCache {
 	treeItems: Map<string[], ViewObj>;
-	notesContainer: Element;
 
 	constructor() {
 		this.treeItems = new Map();
 	}
 
 	clear() {
-		this.notesContainer.empty();
 		this.treeItems.clear();
 	}
 
@@ -34,29 +33,39 @@ export class ViewCache {
 	}
 
 	changeActive(activeNote: string | undefined) {
-		for (const [path, item] of this.treeItems) {
+		for (const [, item] of this.treeItems) {
 			item.treeItemLabel.removeClass("is-active");
 
-			const nameInPath = path[path.length - 1];
-			if (nameInPath === activeNote) {
+			if (item.name === activeNote) {
 				item.treeItemLabel.addClass("is-active");
 			}
+			//this.changeActiveRecursive(item, activeNote);
 		}
 	}
 
+	// changeActiveRecursive(item: ViewObj, activeNote: string | undefined) {
+	// 	item.treeItemLabel.removeClass("is-active");
+
+	// 	if (item.name === activeNote) {
+	// 		item.treeItemLabel.addClass("is-active");
+	// 	}
+
+	// 	for (const [, child] of item.children) {
+	// 		this.changeActiveRecursive(child, activeNote);
+	// 	}
+	// }
+
 	handleCreate(noteName: string) {
-		for (const [path, item] of this.treeItems) {
-			const nameInPath = path[path.length - 1];
-			if (nameInPath === noteName) {
+		for (const [, item] of this.treeItems) {
+			if (item.name === noteName) {
 				item.treeItemName.removeClass("potential-note");
 			}
 		}
 	}
 
 	handleDelete(noteName: string) {
-		for (const [path, item] of this.treeItems) {
-			const nameInPath = path[path.length - 1];
-			if (nameInPath === noteName) {
+		for (const [, item] of this.treeItems) {
+			if (item.name === noteName) {
 				item.treeItemName.addClass("potential-note");
 			}
 		}
@@ -64,9 +73,9 @@ export class ViewCache {
 
 	handleRename(oldName: string, newName: string) {
 		for (const [path, item] of this.treeItems) {
-			const nameInPath = path[path.length - 1];
-			if (nameInPath === oldName) {
+			if (item.name === oldName) {
 				item.treeItemName.setText(newName);
+				item.name = newName;
 			}
 
 			// replace the name in any path which contains it
@@ -77,26 +86,16 @@ export class ViewCache {
 		}
 	}
 
-	// --- Create a proper div cache to handle updating and sorting more gracefully ---
-	// isCollapsed and childContainer as part of cache element to make accesible
 	// can use path as name, but children should be in parent object, rather than all together in the same map
 	handleModify(noteName: string) {
-		for (const [path, item] of this.treeItems) {
-			const nameInPath = path[path.length - 1];
-
+		for (const [, item] of this.treeItems) {
 			// update link count for each element in viewCache
-			const note = this.noteCache.notes.get(nameInPath);
-			if (!note) {
-				console.error(
-					`handleModify Error: couldn't update count for ${nameInPath}`,
-				);
-				continue;
-			}
-			item.treeItemNumber.setText(String(note.count));
+			item.treeItemNumber.setText(String(item.note.count));
 
-			if (nameInPath === noteName || note.linkSet.has(noteName)) {
+			if (item.name === noteName || item.note.linkSet.has(noteName)) {
 				// --- TODO ---
 				// rerender this div, and delete all it's children from viewCache
+				// needs to also update items which used to have this item in it's set
 			}
 		}
 	}

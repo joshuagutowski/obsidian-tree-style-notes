@@ -49,13 +49,13 @@ export class TreeNotesPlugin extends Plugin {
 					const cacheFile = view.noteCache.notes.get(file.basename);
 					if (cacheFile) {
 						cacheFile.link = undefined;
-						//view.noteCache.updateEntry(
-						//	file,
-						//	this.app.metadataCache,
-						//	this.settings.sortOrder,
-						//);
+						view.noteCache.updateEntry(
+							file,
+							this.app.metadataCache,
+							this.settings.sortOrder,
+						);
 						view.viewCache.handleDelete(file.basename);
-						//view.viewCache.handleModify(file.basename);
+						view.viewCache.handleModify(file.basename);
 					}
 				}),
 			),
@@ -78,18 +78,18 @@ export class TreeNotesPlugin extends Plugin {
 		);
 
 		// renaming also sends modify event, make sure they don't conflict
-		//this.registerEvent(
-		//	this.app.metadataCache.on("changed", (file: TFile) =>
-		//		this.refreshView((view) => {
-		//			view.noteCache.updateEntry(
-		//				file,
-		//				this.app.metadataCache,
-		//				this.settings.sortOrder,
-		//			);
-		//			view.viewCache.handleModify(file.basename);
-		//		}),
-		//	),
-		//);
+		this.registerEvent(
+			this.app.metadataCache.on("changed", (file: TFile) =>
+				this.refreshView((view) => {
+					view.noteCache.updateEntry(
+						file,
+						this.app.metadataCache,
+						this.settings.sortOrder,
+					);
+					view.viewCache.handleModify(file.basename);
+				}),
+			),
+		);
 
 		this.addRibbonIcon("list-tree", "Open tree notes view", () =>
 			this.activateView(),
