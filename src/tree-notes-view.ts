@@ -90,6 +90,10 @@ export class TreeNotesView extends ItemView {
 			? parent.childContainer
 			: this.notesContainer; // top level
 
+		const parentArray = parent
+			? parent.children
+			: this.viewCache.treeItems; // top level
+
 		// make elements from map
 		for (const [name, note] of links) {
 			// skip if count below cutoff on top level or if note is already in the path
@@ -104,15 +108,12 @@ export class TreeNotesView extends ItemView {
 
 			this.createItem(
 				parentContainer,
+				parentArray,
 				name,
 				note,
 				notePath,
 				isBase,
 			);
-		}
-
-		if (parent?.childContainer?.hasChildNodes) {
-			parent.childContainer?.hide();
 		}
 
 		this.viewCache.changeActive(
@@ -121,13 +122,14 @@ export class TreeNotesView extends ItemView {
 	}
 
 	createItem(
-		parent: Element,
+		parentContainer: Element,
+		parentArray: ViewObj[],
 		name: string,
 		note: NoteObj,
 		path: string[],
 		isBase: boolean,
 	) {
-		const treeItem = parent.createDiv({
+		const treeItem = parentContainer.createDiv({
 			cls: "tree-item nav-folder is-collapsed",
 		});
 
@@ -167,21 +169,22 @@ export class TreeNotesView extends ItemView {
 			note: note,
 			treeItem: treeItem,
 			treeItemLabel: treeItemLabel,
+			collapseIcon: collapseIcon,
 			treeItemName: treeItemName,
 			treeItemNumber: treeItemNumber,
 			isCollapsed: true,
 			childContainer: childContainer,
+			children: [],
 		};
 
-		this.viewCache.treeItems.set(path, newTreeItem);
+		parentArray.push(newTreeItem);
 
-		this.setupEventListeners(newTreeItem, path, collapseIcon, isBase);
+		this.setupEventListeners(newTreeItem, path, isBase);
 	}
 
 	private setupEventListeners(
 		item: ViewObj,
 		path: string[],
-		collapseIcon: HTMLDivElement | null,
 		isBase: boolean,
 	) {
 		if (isBase) {
@@ -200,7 +203,7 @@ export class TreeNotesView extends ItemView {
 			item.isCollapsed = !item.isCollapsed;
 
 			item.treeItem.toggleClass("is-collapsed", item.isCollapsed);
-			collapseIcon?.toggleClass("is-collapsed", item.isCollapsed);
+			item.collapseIcon?.toggleClass("is-collapsed", item.isCollapsed);
 
 			if (!item.isCollapsed) {
 				if (!item.childContainer.hasChildNodes()) {

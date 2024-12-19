@@ -5,25 +5,25 @@ export type ViewObj = {
 	note: NoteObj;
 	treeItem: HTMLDivElement;
 	treeItemLabel: HTMLDivElement;
+	collapseIcon: HTMLDivElement | null;
 	treeItemName: HTMLDivElement;
 	treeItemNumber: HTMLDivElement;
 	isCollapsed: boolean;
 	childContainer: HTMLDivElement;
-	//children: Map<string, ViewObj>;
+	children: ViewObj[];
 };
 
 export class ViewCache {
-	treeItems: Map<string[], ViewObj>;
+	treeItems: ViewObj[];
 
 	constructor() {
-		this.treeItems = new Map();
+		this.treeItems = [];
 	}
 
 	clear() {
-		this.treeItems.clear();
+		this.treeItems = [];
 	}
 
-	// all of these should be handled by the container?
 	sort() {
 		// sorts the whole container
 	}
@@ -33,70 +33,95 @@ export class ViewCache {
 	}
 
 	changeActive(activeNote: string | undefined) {
-		for (const [, item] of this.treeItems) {
-			item.treeItemLabel.removeClass("is-active");
-
-			if (item.name === activeNote) {
-				item.treeItemLabel.addClass("is-active");
-			}
-			//this.changeActiveRecursive(item, activeNote);
+		for (const item of this.treeItems) {
+			this.changeActiveRecursive(item, activeNote);
 		}
 	}
 
-	// changeActiveRecursive(item: ViewObj, activeNote: string | undefined) {
-	// 	item.treeItemLabel.removeClass("is-active");
+	changeActiveRecursive(item: ViewObj, activeNote: string | undefined) {
+		item.treeItemLabel.removeClass("is-active");
 
-	// 	if (item.name === activeNote) {
-	// 		item.treeItemLabel.addClass("is-active");
-	// 	}
+		if (item.name === activeNote) {
+			item.treeItemLabel.addClass("is-active");
+		}
 
-	// 	for (const [, child] of item.children) {
-	// 		this.changeActiveRecursive(child, activeNote);
-	// 	}
-	// }
+		for (const child of item.children) {
+			this.changeActiveRecursive(child, activeNote);
+		}
+	}
 
 	handleCreate(noteName: string) {
-		for (const [, item] of this.treeItems) {
-			if (item.name === noteName) {
-				item.treeItemName.removeClass("potential-note");
-			}
+		for (const item of this.treeItems) {
+			this.handleCreateRecursive(item, noteName);
+		}
+	}
+
+	handleCreateRecursive(item: ViewObj, noteName: string) {
+		item.treeItemName.removeClass("potential-note");
+
+		for (const child of item.children) {
+			this.handleCreateRecursive(child, noteName);
 		}
 	}
 
 	handleDelete(noteName: string) {
-		for (const [, item] of this.treeItems) {
+		for (const item of this.treeItems) {
 			if (item.name === noteName) {
-				item.treeItemName.addClass("potential-note");
+				this.handleDeleteRecursive(item, noteName);
 			}
+		}
+	}
+
+	handleDeleteRecursive(item: ViewObj, noteName: string) {
+		item.treeItemName.addClass("potential-note");
+
+		for (const child of item.children) {
+			this.handleDeleteRecursive(child, noteName);
 		}
 	}
 
 	handleRename(oldName: string, newName: string) {
-		for (const [path, item] of this.treeItems) {
-			if (item.name === oldName) {
-				item.treeItemName.setText(newName);
-				item.name = newName;
-			}
-
-			// replace the name in any path which contains it
-			const nameIndex = path.indexOf(oldName);
-			if (nameIndex != -1) {
-				path[nameIndex] = newName;
-			}
+		for (const item of this.treeItems) {
+			this.handleRenameRecursive(item, oldName, newName);
 		}
 	}
 
-	// can use path as name, but children should be in parent object, rather than all together in the same map
-	handleModify(noteName: string) {
-		for (const [, item] of this.treeItems) {
-			// update link count for each element in viewCache
-			item.treeItemNumber.setText(String(item.note.count));
+	handleRenameRecursive(item: ViewObj, oldName: string, newName: string) {
+		if (item.name === oldName) {
+			item.treeItemName.setText(newName);
+			item.name = newName;
+		}
 
-			if (item.name === noteName || item.note.linkSet.has(noteName)) {
-				// --- TODO ---
-				// rerender this div, and delete all it's children from viewCache
-				// needs to also update items which used to have this item in it's set
-			}
+		for (const child of item.children) {
+			this.handleRenameRecursive(child, oldName, newName);
+		}
+	}
+
+	handleModify(noteName: string) {
+		for (const item of this.treeItems) {
+			this.handleModifyRecursive(item, noteName);
+		}
+	}
+
+	handleModifyRecursive(item: ViewObj, noteName: string) {
+		const currentNum= item.treeItemNumber.getText();
+		const newNum = String(item.note.count);
+
+		if (currentNum !== newNum) {
+			item.treeItemNumber.setText(newNum);
+		}
+
+		if (item.name === noteName || item.children.some((child) => child.name === noteName) || item.note.linkSet.has(noteName)) {
+			item.isCollapsed = true;
+			item.treeItem.toggleClass("is-collapsed", item.isCollapsed);
+			item.collapseIcon?.toggleClass("is-collapsed", item.isCollapsed);
+			item.childContainer.hide();
+			item.childContainer.empty();
+			item.children = [];
+		}
+
+		for (const child of item.children) {
+			this.handleModifyRecursive(child, noteName);
 		}
 	}
 }
