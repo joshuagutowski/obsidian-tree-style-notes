@@ -41,8 +41,6 @@ export class TreeNotesPlugin extends Plugin {
 			),
 		);
 
-		// --- update to refresh links when note is deleted ---
-		// link it to updateCacheEntry?
 		this.registerEvent(
 			this.app.metadataCache.on("deleted", (file: TFile) =>
 				this.refreshView((view) => {
