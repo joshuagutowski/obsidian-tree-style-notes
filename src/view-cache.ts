@@ -1,5 +1,7 @@
 import { NoteObj } from "./note-cache";
+
 import { TreeNotesPlugin } from "./tree-notes-plugin";
+
 import { TreeNotesView } from "./tree-notes-view";
 
 export type ViewObj = {
@@ -144,15 +146,16 @@ export class ViewCache {
 			item.treeItemNumber.setText(newNum);
 		}
 
-		if (
-			(item.name === noteName ||
+		if (!item.isCollapsed) {
+			if (
+				item.name === noteName ||
 				item.children.some((child) => child.name === noteName) ||
-				item.note.linkSet.has(noteName)) &&
-			!item.isCollapsed
-		) {
-			item.childContainer.empty();
-			item.children = [];
-			this.view.renderItems(item);
+				item.note.linkSet.has(noteName)
+			) {
+				item.childContainer.empty();
+				item.children = [];
+				this.view.renderItems(item);
+			}
 		}
 
 		for (const child of item.children) {

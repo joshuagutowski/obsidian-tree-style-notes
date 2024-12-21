@@ -80,7 +80,8 @@ export class TreeNotesView extends ItemView {
 		this.renderItems(null);
 	}
 
-	renderItems(parent: ViewObj | null) { // parent is null if top level
+	renderItems(parent: ViewObj | null) {
+		// parent is null if top level
 		// create map to iterate through
 		const links = parent ? parent.note.linkSet : this.noteCache.notes; // top level
 
@@ -91,6 +92,8 @@ export class TreeNotesView extends ItemView {
 		const path = parent ? parent.path : [];
 
 		const parentArray = parent ? parent.children : this.viewCache.treeItems; // top level
+
+		let insertArray: ViewObj[] = [];
 
 		// make elements from map
 		for (const [name, note] of links) {
@@ -105,15 +108,20 @@ export class TreeNotesView extends ItemView {
 				path.includes(key),
 			);
 
-			this.createItem(
-				parentContainer,
+			const newItem = this.createItem(
+				//parentContainer,
 				parentArray,
 				name,
 				note,
 				notePath,
 				isBase,
 			);
+
+			insertArray.push(newItem);
+			parentArray.push(newItem);
 		}
+
+		parentContainer.append(...insertArray.map((item) => item.treeItem));
 
 		this.viewCache.changeActive(
 			this.app.workspace.getActiveFile()?.basename,
@@ -121,16 +129,18 @@ export class TreeNotesView extends ItemView {
 	}
 
 	createItem(
-		parentContainer: Element,
+		//parentContainer: Element,
 		parentArray: ViewObj[],
 		name: string,
 		note: NoteObj,
 		path: string[],
 		isBase: boolean,
-	) {
-		const treeItem = parentContainer.createDiv({
-			cls: "tree-item nav-folder is-collapsed",
-		});
+	): ViewObj {
+		const treeItem = document.createElement("div");
+		treeItem.className = "tree-item nav-folder is-collapsed";
+		//const treeItem = parentContainer.createDiv({
+		//	cls: "tree-item nav-folder is-collapsed",
+		//});
 
 		const treeItemLabel = treeItem.createDiv({
 			cls: "tree-item-self nav-folder-title is-clickable mod-collapsible",
@@ -177,15 +187,14 @@ export class TreeNotesView extends ItemView {
 			children: [],
 		};
 
-		parentArray.push(newTreeItem);
+		//parentArray.push(newTreeItem);
 
 		this.setupEventListeners(newTreeItem, isBase);
+
+		return newTreeItem;
 	}
 
-	private setupEventListeners(
-		item: ViewObj,
-		isBase: boolean,
-	) {
+	private setupEventListeners(item: ViewObj, isBase: boolean) {
 		if (isBase) {
 			item.treeItemLabel.addEventListener("click", async () => {
 				this.handleNoteOpen(item.name, item.note);
