@@ -39,10 +39,6 @@ In the settings you can make the following changes:
 2. Link count cutoff: Set the cutoff for how many links a note needs to be show in the top level of the tree.
 3. Include uncreated notes: Set whether notes which don’t exist yet are displayed in the tree.
 
-### Rough Edges
-
-At the moment, when renaming notes, creating new notes which don’t exist in the tree already, or adding links within notes, the tree won’t automatically update to reflect these changes (I plan to implement this, but for as long as it’s not, rather than refreshing the whole tree every time you edit a file, it just does nothing). You can use the refresh button to update the tree to reflect any changes you’ve made.
-
 ## Manual Install
 
 1. Download the release files (excluding the source code),
@@ -52,7 +48,7 @@ At the moment, when renaming notes, creating new notes which don’t exist in th
 ## Planned Features/Improvements
 
 - [x] Retain open state within closed parent objects
-- [ ] Handle updating notes better (renaming, links, etc.)
+- [x] Handle updating notes better (renaming, links, etc.)
 - [ ] Add excluded folders/notes
 - [ ] Open a note as a top level note in a new pane (for multiple trees at once)
 - [ ] Add the ability to search
