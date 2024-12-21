@@ -45,7 +45,9 @@ export class TreeNotesSettingsTab extends PluginSettingTab {
 						}
 						this.plugin.settings.rootFolder = normalizedPath;
 						await this.plugin.saveSettings();
-						this.plugin.refreshView((view) => view.renderView());
+						this.plugin.refreshView((view) =>
+							view.renderView(true),
+						);
 					}),
 			);
 
@@ -67,7 +69,7 @@ export class TreeNotesSettingsTab extends PluginSettingTab {
 						this.plugin.settings.topLevelCutoff = parsedValue;
 					}
 					await this.plugin.saveSettings();
-					this.plugin.refreshView((view) => view.renderView());
+					this.plugin.refreshView((view) => view.renderView(true));
 				});
 			});
 
@@ -82,7 +84,7 @@ export class TreeNotesSettingsTab extends PluginSettingTab {
 				).onChange(async (value) => {
 					this.plugin.settings.includePotential = value;
 					await this.plugin.saveSettings();
-					this.plugin.refreshView((view) => view.renderView());
+					this.plugin.refreshView((view) => view.renderView(true));
 				}),
 			);
 	}

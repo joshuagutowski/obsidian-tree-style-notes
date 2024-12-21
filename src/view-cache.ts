@@ -1,8 +1,11 @@
 import { NoteObj } from "./note-cache";
+import { TreeNotesPlugin } from "./tree-notes-plugin";
+import { TreeNotesView } from "./tree-notes-view";
 
 export type ViewObj = {
 	name: string;
 	note: NoteObj;
+	path: string[];
 	treeItem: HTMLDivElement;
 	treeItemLabel: HTMLDivElement;
 	collapseIcon: HTMLDivElement | null;
@@ -14,9 +17,14 @@ export type ViewObj = {
 };
 
 export class ViewCache {
+	plugin: TreeNotesPlugin;
+	view: TreeNotesView;
+	container: Element;
 	treeItems: ViewObj[];
 
-	constructor() {
+	constructor(plugin: TreeNotesPlugin, view: TreeNotesView) {
+		this.plugin = plugin;
+		this.view = view;
 		this.treeItems = [];
 	}
 
@@ -25,11 +33,35 @@ export class ViewCache {
 	}
 
 	sort() {
-		// sorts the whole container
+		this.sortRecursive(this.container, this.treeItems);
 	}
 
-	render() {
-		// renders all the tree items
+	sortRecursive(container: Element, children: ViewObj[]) {
+		for (const child of children) {
+			this.sortRecursive(child.childContainer, child.children);
+		}
+		container.empty();
+		children.sort((a, b) => {
+			switch (this.plugin.settings.sortOrder) {
+				case "NUM_DESC":
+					return a.note.count != b.note.count
+						? b.note.count - a.note.count
+						: a.name.localeCompare(b.name);
+				case "NUM_ASC":
+					return a.note.count != b.note.count
+						? a.note.count - b.note.count
+						: a.name.localeCompare(b.name);
+				case "ALPH_ASC":
+					return a.name.localeCompare(b.name);
+				case "ALPH_DESC":
+					return b.name.localeCompare(a.name);
+				default:
+					return a.note.count != b.note.count
+						? b.note.count - a.note.count
+						: a.name.localeCompare(b.name);
+			}
+		});
+		container.append(...children.map((obj) => obj.treeItem));
 	}
 
 	changeActive(activeNote: string | undefined) {
@@ -101,23 +133,26 @@ export class ViewCache {
 		for (const item of this.treeItems) {
 			this.handleModifyRecursive(item, noteName);
 		}
+		this.sort();
 	}
 
 	handleModifyRecursive(item: ViewObj, noteName: string) {
-		const currentNum= item.treeItemNumber.getText();
+		const currentNum = item.treeItemNumber.getText();
 		const newNum = String(item.note.count);
 
 		if (currentNum !== newNum) {
 			item.treeItemNumber.setText(newNum);
 		}
 
-		if (item.name === noteName || item.children.some((child) => child.name === noteName) || item.note.linkSet.has(noteName)) {
-			item.isCollapsed = true;
-			item.treeItem.toggleClass("is-collapsed", item.isCollapsed);
-			item.collapseIcon?.toggleClass("is-collapsed", item.isCollapsed);
-			item.childContainer.hide();
+		if (
+			(item.name === noteName ||
+				item.children.some((child) => child.name === noteName) ||
+				item.note.linkSet.has(noteName)) &&
+			!item.isCollapsed
+		) {
 			item.childContainer.empty();
 			item.children = [];
+			this.view.renderItems(item);
 		}
 
 		for (const child of item.children) {

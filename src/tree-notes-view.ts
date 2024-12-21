@@ -23,7 +23,7 @@ export class TreeNotesView extends ItemView {
 		this.container.addClass("workspace-leaf");
 
 		this.noteCache = new NoteCache();
-		this.viewCache = new ViewCache();
+		this.viewCache = new ViewCache(plugin, this);
 	}
 
 	getViewType(): string {
@@ -50,6 +50,7 @@ export class TreeNotesView extends ItemView {
 
 	async renderView(buildNoteCache: boolean) {
 		this.container.empty();
+		this.viewCache.clear();
 
 		if (buildNoteCache) {
 			this.noteCache.clear();
@@ -74,30 +75,28 @@ export class TreeNotesView extends ItemView {
 			cls: "nav-files-container node-insert-event",
 		});
 
-		this.renderItems([], null);
+		this.viewCache.container = this.notesContainer;
+
+		this.renderItems(null);
 	}
 
-	renderItems(
-		path: string[],
-		parent: ViewObj | null, // null if top level
-	) {
+	renderItems(parent: ViewObj | null) { // parent is null if top level
 		// create map to iterate through
-		const links = parent
-			? parent.note.linkSet
-			: this.noteCache.notes; // top level
+		const links = parent ? parent.note.linkSet : this.noteCache.notes; // top level
 
 		const parentContainer = parent
 			? parent.childContainer
 			: this.notesContainer; // top level
 
-		const parentArray = parent
-			? parent.children
-			: this.viewCache.treeItems; // top level
+		const path = parent ? parent.path : [];
+
+		const parentArray = parent ? parent.children : this.viewCache.treeItems; // top level
 
 		// make elements from map
 		for (const [name, note] of links) {
 			// skip if count below cutoff on top level or if note is already in the path
-			if (!parent && note.count < this.plugin.settings.topLevelCutoff) continue;
+			if (!parent && note.count < this.plugin.settings.topLevelCutoff)
+				continue;
 			if (path.includes(name)) continue;
 
 			const notePath: string[] = [...path, name];
@@ -167,6 +166,7 @@ export class TreeNotesView extends ItemView {
 		const newTreeItem: ViewObj = {
 			name: name,
 			note: note,
+			path: path,
 			treeItem: treeItem,
 			treeItemLabel: treeItemLabel,
 			collapseIcon: collapseIcon,
@@ -179,12 +179,11 @@ export class TreeNotesView extends ItemView {
 
 		parentArray.push(newTreeItem);
 
-		this.setupEventListeners(newTreeItem, path, isBase);
+		this.setupEventListeners(newTreeItem, isBase);
 	}
 
 	private setupEventListeners(
 		item: ViewObj,
-		path: string[],
 		isBase: boolean,
 	) {
 		if (isBase) {
@@ -207,7 +206,7 @@ export class TreeNotesView extends ItemView {
 
 			if (!item.isCollapsed) {
 				if (!item.childContainer.hasChildNodes()) {
-					this.renderItems(path, item);
+					this.renderItems(item);
 				}
 				item.childContainer.show();
 			} else {
