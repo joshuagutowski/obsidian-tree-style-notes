@@ -31,6 +31,7 @@ View buttons:
 - Sort order: allows you to select a sort order.
 - Collapse: collapses all currently open notes and their children.
 - Refresh: refreshes the tree in case of changes in the vault which aren’t reflected in the tree.
+
 (Some actions like moving notes in and out of your selected folder aren't properly supported yet, so sometimes a refresh is necessary)
 
 ### Settings
