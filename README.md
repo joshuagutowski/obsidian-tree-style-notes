@@ -26,14 +26,16 @@ Notes which already exist in your vault display in the standard text colour, and
 
 To help keep things organised, parent notes are not displayed beneath their respective child notes. This may become an optional setting in the future.
 
-The new note button creates a new untitled note in your vault.
-The sort order button allows you to select a sort order.
-The collapse button allows you to collapse all currently open notes.
-The refresh button allows you to refresh the tree in case of changes in the vault which aren’t reflected in the tree.
+View buttons:
+- New note: creates a new untitled note in your vault.
+- Sort order: allows you to select a sort order.
+- Collapse: collapses all currently open notes and their children.
+- Refresh: refreshes the tree in case of changes in the vault which aren’t reflected in the tree.
+(Some actions like moving notes in and out of your selected folder aren't properly supported yet, so sometimes a refresh is necessary)
 
 ### Settings
 
-In the settings you can make the following changes:
+In settings you can make the following changes:
 
 1. Notes folder: Only notes from this folder will be displayed.
 2. Link count cutoff: Set the cutoff for how many links a note needs to be show in the top level of the tree.
@@ -41,14 +43,15 @@ In the settings you can make the following changes:
 
 ## Manual Install
 
-1. Download the release files (excluding the source code),
-2. Put the files into a folder named `obsidian-tree-style-notes` in your `.obsidian/plugins/` folder
+1. Download the release files.
+2. Put the files into a folder named `obsidian-tree-style-notes` in your `.obsidian/plugins/` folder.
 3. Activate the plugin from your Obsidian's community plugins tab in settings.
 
 ## Planned Features/Improvements
 
 - [x] Retain open state within closed parent objects
-- [x] Handle updating notes better (renaming, links, etc.)
+- [x] Handle updating notes (renaming, links, etc.)
+- [ ] Better handling for vault events & notes folder
 - [ ] Add excluded folders/notes
 - [ ] Open a note as a top level note in a new pane (for multiple trees at once)
 - [ ] Add the ability to search
