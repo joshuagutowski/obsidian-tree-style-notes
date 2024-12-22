@@ -45,6 +45,7 @@ export class TreeNotesView extends ItemView {
 	async onClose() {
 		this.viewCache.clear();
 		this.noteCache.clear();
+		this.notesContainer.empty();
 		this.container.empty();
 	}
 
@@ -75,8 +76,6 @@ export class TreeNotesView extends ItemView {
 			cls: "nav-files-container node-insert-event",
 		});
 
-		this.viewCache.container = this.notesContainer;
-
 		this.renderItems(null);
 	}
 
@@ -89,11 +88,9 @@ export class TreeNotesView extends ItemView {
 			? parent.childContainer
 			: this.notesContainer; // top level
 
-		const path = parent ? parent.path : [];
-
 		const parentArray = parent ? parent.children : this.viewCache.treeItems; // top level
 
-		let insertArray: ViewObj[] = [];
+		const path = parent ? parent.path : [];
 
 		// make elements from map
 		for (const [name, note] of links) {
@@ -104,43 +101,25 @@ export class TreeNotesView extends ItemView {
 
 			const notePath: string[] = [...path, name];
 
-			const isBase = Array.from(note.linkSet.keys()).every((key) =>
-				path.includes(key),
-			);
+			const newItem = this.createItem(name, note, notePath);
 
-			const newItem = this.createItem(
-				//parentContainer,
-				parentArray,
-				name,
-				note,
-				notePath,
-				isBase,
-			);
-
-			insertArray.push(newItem);
 			parentArray.push(newItem);
 		}
 
-		parentContainer.append(...insertArray.map((item) => item.treeItem));
+		parentContainer.append(...parentArray.map((item) => item.treeItem));
 
 		this.viewCache.changeActive(
 			this.app.workspace.getActiveFile()?.basename,
 		);
 	}
 
-	createItem(
-		//parentContainer: Element,
-		parentArray: ViewObj[],
-		name: string,
-		note: NoteObj,
-		path: string[],
-		isBase: boolean,
-	): ViewObj {
+	createItem(name: string, note: NoteObj, path: string[]): ViewObj {
+		const isBase = Array.from(note.linkSet.keys()).every((key) =>
+			path.includes(key),
+		);
+
 		const treeItem = document.createElement("div");
 		treeItem.className = "tree-item nav-folder is-collapsed";
-		//const treeItem = parentContainer.createDiv({
-		//	cls: "tree-item nav-folder is-collapsed",
-		//});
 
 		const treeItemLabel = treeItem.createDiv({
 			cls: "tree-item-self nav-folder-title is-clickable mod-collapsible",
@@ -186,8 +165,6 @@ export class TreeNotesView extends ItemView {
 			childContainer: childContainer,
 			children: [],
 		};
-
-		//parentArray.push(newTreeItem);
 
 		this.setupEventListeners(newTreeItem, isBase);
 

@@ -19,10 +19,9 @@ export type ViewObj = {
 };
 
 export class ViewCache {
+	treeItems: ViewObj[];
 	plugin: TreeNotesPlugin;
 	view: TreeNotesView;
-	container: Element;
-	treeItems: ViewObj[];
 
 	constructor(plugin: TreeNotesPlugin, view: TreeNotesView) {
 		this.plugin = plugin;
@@ -35,14 +34,14 @@ export class ViewCache {
 	}
 
 	sort() {
-		this.sortRecursive(this.container, this.treeItems);
+		this.sortRecursive(this.view.notesContainer, this.treeItems);
 	}
 
 	sortRecursive(container: Element, children: ViewObj[]) {
+		container.empty();
 		for (const child of children) {
 			this.sortRecursive(child.childContainer, child.children);
 		}
-		container.empty();
 		children.sort((a, b) => {
 			switch (this.plugin.settings.sortOrder) {
 				case "NUM_DESC":
