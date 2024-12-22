@@ -22,7 +22,7 @@ export class TreeNotesView extends ItemView {
 		this.container.removeClass("view-content");
 		this.container.addClass("workspace-leaf");
 
-		this.noteCache = new NoteCache();
+		this.noteCache = new NoteCache(plugin);
 		this.viewCache = new ViewCache(plugin, this);
 	}
 
@@ -57,15 +57,8 @@ export class TreeNotesView extends ItemView {
 			this.noteCache.clear();
 
 			const files = this.app.vault.getMarkdownFiles();
-			const filteredFiles = files.filter((file) => {
-				return file.path.startsWith(this.plugin.settings.rootFolder);
-			});
 
-			this.noteCache.createCache(
-				filteredFiles,
-				this.app.metadataCache,
-				this.plugin.settings.includePotential,
-			);
+			this.noteCache.createCache(files, this.app.metadataCache);
 		}
 
 		this.noteCache.sort(this.plugin.settings.sortOrder);

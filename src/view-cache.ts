@@ -90,7 +90,9 @@ export class ViewCache {
 	}
 
 	handleCreateRecursive(item: ViewObj, noteName: string) {
-		item.treeItemName.removeClass("potential-note");
+		if (item.name === noteName) {
+			item.treeItemName.removeClass("potential-note");
+		}
 
 		for (const child of item.children) {
 			this.handleCreateRecursive(child, noteName);
@@ -99,14 +101,14 @@ export class ViewCache {
 
 	handleDelete(noteName: string) {
 		for (const item of this.treeItems) {
-			if (item.name === noteName) {
-				this.handleDeleteRecursive(item, noteName);
-			}
+			this.handleDeleteRecursive(item, noteName);
 		}
 	}
 
 	handleDeleteRecursive(item: ViewObj, noteName: string) {
-		item.treeItemName.addClass("potential-note");
+		if (item.name === noteName) {
+			item.treeItemName.addClass("potential-note");
+		}
 
 		for (const child of item.children) {
 			this.handleDeleteRecursive(child, noteName);
@@ -131,18 +133,28 @@ export class ViewCache {
 	}
 
 	handleModify(noteName: string) {
+		let hasChanged = false;
+
 		for (const item of this.treeItems) {
-			this.handleModifyRecursive(item, noteName);
+			if (this.handleModifyRecursive(item, noteName)) {
+				hasChanged = true;
+			}
 		}
-		this.sort();
+
+		if (hasChanged) {
+			this.sort();
+		}
 	}
 
-	handleModifyRecursive(item: ViewObj, noteName: string) {
+	handleModifyRecursive(item: ViewObj, noteName: string): boolean {
+		let hasChanged = false;
+
 		const currentNum = item.treeItemNumber.getText();
 		const newNum = String(item.note.count);
 
 		if (currentNum !== newNum) {
 			item.treeItemNumber.setText(newNum);
+			hasChanged = true;
 		}
 
 		if (!item.isCollapsed) {
@@ -154,11 +166,17 @@ export class ViewCache {
 				item.childContainer.empty();
 				item.children = [];
 				this.view.renderItems(item);
+				hasChanged = true;
 			}
 		}
 
 		for (const child of item.children) {
-			this.handleModifyRecursive(child, noteName);
+			if (this.handleModifyRecursive(child, noteName)) {
+				hasChanged = true;
+			}
 		}
+
+		return hasChanged;
 	}
 }
+

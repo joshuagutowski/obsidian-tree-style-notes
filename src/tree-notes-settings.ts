@@ -11,7 +11,7 @@ export interface TreeNotesSettings {
 
 export const DEFAULT_SETTINGS: TreeNotesSettings = {
 	rootFolder: "",
-	topLevelCutoff: 4,
+	topLevelCutoff: 6,
 	includePotential: true,
 	sortOrder: "NUM_DESC",
 };
@@ -54,7 +54,7 @@ export class TreeNotesSettingsTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("Link count cutoff")
 			.setDesc(
-				"Set how many links are required for a note to show up in the top level of the tree, defaults to 4",
+				"Set how many links are required for a note to show up in the top level of the tree, defaults to 6",
 			)
 			.addText((text) => {
 				text.inputEl.type = "number";
@@ -64,7 +64,7 @@ export class TreeNotesSettingsTab extends PluginSettingTab {
 				).onChange(async (value) => {
 					const parsedValue = parseInt(value, 10);
 					if (isNaN(parsedValue)) {
-						this.plugin.settings.topLevelCutoff = 4;
+						this.plugin.settings.topLevelCutoff = 6;
 					} else {
 						this.plugin.settings.topLevelCutoff = parsedValue;
 					}

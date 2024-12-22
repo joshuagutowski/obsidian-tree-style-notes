@@ -5,6 +5,8 @@ import {
 	FrontmatterLinkCache,
 } from "obsidian";
 
+import { TreeNotesPlugin } from "./tree-notes-plugin";
+
 export type NoteObj = {
 	count: number;
 	link: TFile | undefined;
@@ -20,41 +22,37 @@ export const SortOrder = new Map<string, string>([
 
 export class NoteCache {
 	notes: Map<string, NoteObj> = new Map();
+	plugin: TreeNotesPlugin;
 
-	createCache(
-		files: TFile[],
-		metadataCache: MetadataCache,
-		includePotential: boolean,
-	) {
+	constructor(plugin: TreeNotesPlugin) {
+		this.plugin = plugin;
+	}
+
+	createCache(files: TFile[], metadataCache: MetadataCache) {
+		const filteredFiles = files.filter((file) => {
+			return file.path.startsWith(this.plugin.settings.rootFolder);
+		});
 		// build initial cache
-		for (const file of files) {
+		for (const file of filteredFiles) {
 			this.makeEntry(file, metadataCache);
 		}
 
-		for (const [name, note] of this.notes) {
-			// if !includePotential remove potenial notes from cache
-			if (!includePotential) {
-				if (!note.link) {
-					this.notes.delete(name);
-					continue;
-				}
-				for (const [childName, childFile] of note.linkSet) {
-					if (!childFile.link) {
-						note.linkSet.delete(childName);
-					}
-				}
-			}
+		for (const [, note] of this.notes) {
 			// get file counts
 			note.count = note.linkSet.size;
 		}
 	}
 
 	makeEntry(file: TFile, metadataCache: MetadataCache) {
+		if (!file.path.startsWith(this.plugin.settings.rootFolder)) {
+			return;
+		}
+
 		// create cache entry for this file
 		const currentFile = this.getEntry(file.basename);
 		currentFile.link = file;
 
-		// collect all links to iterate over
+		// collect all outgoing links to iterate over
 		const fileCache = metadataCache.getFileCache(file);
 		let fileCacheLinks: (LinkCache | FrontmatterLinkCache)[] = [];
 		if (fileCache && fileCache.links) {
@@ -66,6 +64,22 @@ export class NoteCache {
 
 		// iterate over all links for this file
 		for (const link of fileCacheLinks) {
+			const linkedFile = metadataCache.getFirstLinkpathDest(
+				link.link,
+				file.path,
+			);
+
+			if (!this.plugin.settings.includePotential && !linkedFile) {
+				continue;
+			}
+
+			if (
+				linkedFile &&
+				!linkedFile.path.startsWith(this.plugin.settings.rootFolder)
+			) {
+				continue;
+			}
+
 			const cacheLink = this.getEntry(link.link);
 			if (!currentFile.linkSet.has(link.link)) {
 				currentFile.linkSet.set(link.link, cacheLink);
@@ -104,7 +118,7 @@ export class NoteCache {
 		}
 	}
 
-	updateEntry(file: TFile, metadataCache: MetadataCache, sortOrder: string) {
+	updateEntry(file: TFile, metadataCache: MetadataCache) {
 		const cacheEntry = this.notes.get(file.basename);
 		let oldLinks: NoteObj[] = [];
 		if (cacheEntry) {
@@ -137,7 +151,7 @@ export class NoteCache {
 			note.linkSet.set(file.basename, newCacheEntry);
 			note.count = note.linkSet.size;
 		}
-		this.sort(sortOrder);
+		this.sort(this.plugin.settings.sortOrder);
 	}
 
 	sort(order: string) {

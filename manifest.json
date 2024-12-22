@@ -1,7 +1,7 @@
 {
 	"id": "tree-style-notes",
 	"name": "Tree Style Notes",
-	"version": "1.0.1",
+	"version": "1.1.0",
 	"minAppVersion": "0.15.0",
 	"description": "View notes and their links in a tree style structure to easily discover linked ideas.",
 	"author": "Joshua Gutowski",
