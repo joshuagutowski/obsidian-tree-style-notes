@@ -61,7 +61,7 @@ export class TreeNotesView extends ItemView {
 			this.noteCache.createCache(files, this.app.metadataCache);
 		}
 
-		this.noteCache.sort(this.plugin.settings.sortOrder);
+		this.noteCache.sort();
 
 		this.renderHeader();
 
@@ -292,17 +292,17 @@ export class TreeNotesView extends ItemView {
 
 	private changeSortOrder(event: MouseEvent) {
 		const sortMenu = new Menu();
-		for (const [order, title] of SortOrder) {
+		for (const order of Object.values(SortOrder)) {
 			sortMenu.addItem((item) => {
-				item.setTitle(title);
+				item.setTitle(order);
 				if (order === this.plugin.settings.sortOrder) {
 					item.setChecked(true);
 				}
 				// Set order in plugin settings and refresh view
-				item.onClick(() => {
-					this.plugin.settings.sortOrder = order;
-					this.plugin.saveSettings();
-					this.renderView(false);
+				item.onClick(async () => {
+					this.plugin.settings.sortOrder = order as SortOrder;
+					await this.plugin.saveSettings();
+					this.renderView(true);
 				});
 			});
 		}

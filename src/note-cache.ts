@@ -7,18 +7,18 @@ import {
 
 import { TreeNotesPlugin } from "./tree-notes-plugin";
 
-export type NoteObj = {
+export interface NoteObj {
 	count: number;
 	link: TFile | undefined;
 	linkSet: Map<string, NoteObj>;
 };
 
-export const SortOrder = new Map<string, string>([
-	["NUM_DESC", "Number of links (most to least)"],
-	["NUM_ASC", "Number of links (least to most)"],
-	["ALPH_ASC", "Note name (A to Z)"],
-	["ALPH_DESC", "Note name (Z to A)"],
-]);
+export enum SortOrder {
+	NUM_DESC = "Number of links (most to least)",
+	NUM_ASC = "Number of links (least to most)",
+	ALPH_ASC = "Note name (A to Z)",
+	ALPH_DESC = "Note name (Z to A)",
+}
 
 export class NoteCache {
 	notes: Map<string, NoteObj> = new Map();
@@ -151,33 +151,33 @@ export class NoteCache {
 			note.linkSet.set(file.basename, newCacheEntry);
 			note.count = note.linkSet.size;
 		}
-		this.sort(this.plugin.settings.sortOrder);
+		this.sort();
 	}
 
-	sort(order: string) {
+	sort() {
 		let sortFunc: (a: [string, NoteObj], b: [string, NoteObj]) => number;
 
-		switch (order) {
-			case "NUM_DESC": {
+		switch (this.plugin.settings.sortOrder) {
+			case SortOrder.NUM_DESC: {
 				sortFunc = (a: [string, NoteObj], b: [string, NoteObj]) =>
 					a[1].count != b[1].count
 						? b[1].count - a[1].count
 						: a[0].localeCompare(b[0]);
 				break;
 			}
-			case "NUM_ASC": {
+			case SortOrder.NUM_ASC: {
 				sortFunc = (a: [string, NoteObj], b: [string, NoteObj]) =>
 					a[1].count != b[1].count
 						? a[1].count - b[1].count
 						: a[0].localeCompare(b[0]);
 				break;
 			}
-			case "ALPH_ASC": {
+			case SortOrder.ALPH_ASC: {
 				sortFunc = (a: [string, NoteObj], b: [string, NoteObj]) =>
 					a[0].localeCompare(b[0]);
 				break;
 			}
-			case "ALPH_DESC": {
+			case SortOrder.ALPH_DESC: {
 				sortFunc = (a: [string, NoteObj], b: [string, NoteObj]) =>
 					b[0].localeCompare(a[0]);
 				break;

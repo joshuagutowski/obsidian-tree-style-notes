@@ -1,10 +1,10 @@
-import { NoteObj } from "./note-cache";
+import { NoteObj, SortOrder } from "./note-cache";
 
 import { TreeNotesPlugin } from "./tree-notes-plugin";
 
 import { TreeNotesView } from "./tree-notes-view";
 
-export type ViewObj = {
+export interface ViewObj {
 	name: string;
 	note: NoteObj;
 	path: string[];
@@ -44,17 +44,17 @@ export class ViewCache {
 		}
 		children.sort((a, b) => {
 			switch (this.plugin.settings.sortOrder) {
-				case "NUM_DESC":
+				case SortOrder.NUM_DESC:
 					return a.note.count != b.note.count
 						? b.note.count - a.note.count
 						: a.name.localeCompare(b.name);
-				case "NUM_ASC":
+				case SortOrder.NUM_ASC:
 					return a.note.count != b.note.count
 						? a.note.count - b.note.count
 						: a.name.localeCompare(b.name);
-				case "ALPH_ASC":
+				case SortOrder.ALPH_ASC:
 					return a.name.localeCompare(b.name);
-				case "ALPH_DESC":
+				case SortOrder.ALPH_DESC:
 					return b.name.localeCompare(a.name);
 				default:
 					return a.note.count != b.note.count

@@ -1,19 +1,20 @@
 import { App, normalizePath, PluginSettingTab, Setting } from "obsidian";
 
 import { TreeNotesPlugin } from "./tree-notes-plugin";
+import { SortOrder } from "./note-cache";
 
 export interface TreeNotesSettings {
 	rootFolder: string;
 	topLevelCutoff: number;
 	includePotential: boolean;
-	sortOrder: string;
+	sortOrder: SortOrder;
 }
 
 export const DEFAULT_SETTINGS: TreeNotesSettings = {
 	rootFolder: "",
 	topLevelCutoff: 6,
 	includePotential: true,
-	sortOrder: "NUM_DESC",
+	sortOrder: SortOrder.NUM_DESC,
 };
 
 export class TreeNotesSettingsTab extends PluginSettingTab {
