@@ -69,10 +69,10 @@ export class TreeNotesView extends ItemView {
 			cls: "nav-files-container node-insert-event",
 		});
 
-		this.renderItems(null);
+		this.renderItems();
 	}
 
-	renderItems(parent: ViewObj | null) {
+	renderItems(parent: ViewObj | null = null) {
 		// parent is null if top level
 		// create map to iterate through
 		const links = parent ? parent.note.linkSet : this.noteCache.notes; // top level

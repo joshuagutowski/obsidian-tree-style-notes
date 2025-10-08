@@ -4,7 +4,7 @@ import { TreeNotesPlugin } from "./tree-notes-plugin";
 
 import { TreeNotesView } from "./tree-notes-view";
 
-export interface ViewObj {
+export type ViewObj = {
 	name: string;
 	note: NoteObj;
 	path: string[];

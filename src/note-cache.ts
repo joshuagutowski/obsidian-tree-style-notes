@@ -7,7 +7,7 @@ import {
 
 import { TreeNotesPlugin } from "./tree-notes-plugin";
 
-export interface NoteObj {
+export type NoteObj = {
 	count: number;
 	link: TFile | undefined;
 	linkSet: Map<string, NoteObj>;
@@ -32,13 +32,12 @@ export class NoteCache {
 		const filteredFiles = files.filter((file) => {
 			return file.path.startsWith(this.plugin.settings.rootFolder);
 		});
-		// build initial cache
+
 		for (const file of filteredFiles) {
 			this.makeEntry(file, metadataCache);
 		}
 
 		for (const [, note] of this.notes) {
-			// get file counts
 			note.count = note.linkSet.size;
 		}
 	}
